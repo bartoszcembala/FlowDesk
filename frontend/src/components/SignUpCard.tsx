@@ -21,8 +21,8 @@ export function SignUpCard() {
   const { signUp } = useSignUp()
 
   const onSubmit: SubmitHandler<SignUpFormInputs> = (data) => {
-    signUp(data).then((data) => console.log("data from sign up:", data))
-    console.log("data:", data)
+    signUp(data)
+
     reset()
   }
 
@@ -67,7 +67,7 @@ export function SignUpCard() {
                 <Label htmlFor="password">Password</Label>
                 <a
                   href="#"
-                  className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                  className="inline-block ml-auto text-sm underline-offset-4 hover:underline"
                 >
                   Forgot your password?
                 </a>
@@ -81,7 +81,7 @@ export function SignUpCard() {
             </div>
           </div>
         </CardContent>
-        <CardFooter className="mt-4 flex-col gap-2">
+        <CardFooter className="flex-col gap-2 mt-4">
           <Button type="submit" className="w-full">
             Sign Up
           </Button>

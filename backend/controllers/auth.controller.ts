@@ -124,3 +124,25 @@ export async function login(req: Request, res: Response, next: any) {
     });
   }
 }
+
+export function logout(req: Request, res: Response) {
+  try {
+    res.clearCookie("jwt", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Internal server error",
+    });
+  }
+}

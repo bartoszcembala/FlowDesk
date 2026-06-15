@@ -7,8 +7,22 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
+import { useQueryClient } from "@tanstack/react-query"
+import { useCurrentUser } from "@/lib/queries/userQueries"
 
 export function NavigationBar() {
+  const queryClient = useQueryClient()
+  const { data: user } = useCurrentUser()
+
+  async function handleLogout() {
+    await fetch("http://localhost:3000/api/users/logout", {
+      method: "POST",
+      credentials: "include",
+    })
+
+    queryClient.setQueryData(["user"], null)
+    queryClient.invalidateQueries({ queryKey: ["user"] })
+  }
   return (
     <NavigationMenu>
       <NavigationMenuList>
@@ -27,6 +41,16 @@ export function NavigationBar() {
             <Link to="/login">Login</Link>
           </NavigationMenuLink>
         </NavigationMenuItem>
+        {user && (
+          <NavigationMenuItem>
+            <NavigationMenuLink
+              asChild
+              className={navigationMenuTriggerStyle()}
+            >
+              <button onClick={handleLogout}>Logout</button>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+        )}
       </NavigationMenuList>
     </NavigationMenu>
   )

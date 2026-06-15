@@ -1,6 +1,6 @@
 import express from "express";
-import testRoutes from "./test.ts";
-import userRoutes from "./routes/user.route.ts";
+import testRoutes from "./test";
+import userRoutes from "./routes/user.route";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 

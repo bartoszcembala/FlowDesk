@@ -21,8 +21,8 @@ export function LoginCard() {
   const { register, handleSubmit, reset } = useForm<LoginFormInputs>()
 
   const onSubmit: SubmitHandler<LoginFormInputs> = (data) => {
-    console.log("data:", data)
-    login(data).then((data) => console.log("data from login:", data))
+
+    login(data)
 
     reset()
   }
@@ -58,7 +58,7 @@ export function LoginCard() {
                 <Label htmlFor="password">Password</Label>
                 <a
                   href="#"
-                  className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                  className="inline-block ml-auto text-sm underline-offset-4 hover:underline"
                 >
                   Forgot your password?
                 </a>
@@ -72,7 +72,7 @@ export function LoginCard() {
             </div>
           </div>
         </CardContent>
-        <CardFooter className="mt-4 flex-col gap-2">
+        <CardFooter className="flex-col gap-2 mt-4">
           <Button type="submit" className="w-full">
             Login
           </Button>
