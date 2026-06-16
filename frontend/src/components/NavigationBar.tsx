@@ -33,7 +33,7 @@ export function NavigationBar() {
         </NavigationMenuItem>
         <NavigationMenuItem>
           <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-            <Link to="/">Docs</Link>
+            <Link to="/workspace">Workspace</Link>
           </NavigationMenuLink>
         </NavigationMenuItem>
         <NavigationMenuItem>
@@ -41,13 +41,16 @@ export function NavigationBar() {
             <Link to="/login">Login</Link>
           </NavigationMenuLink>
         </NavigationMenuItem>
+
         {user && (
-          <NavigationMenuItem>
+          <NavigationMenuItem className="fixed right-30">
             <NavigationMenuLink
               asChild
               className={navigationMenuTriggerStyle()}
             >
-              <button onClick={handleLogout}>Logout</button>
+              <button className="cursor-pointer" onClick={handleLogout}>
+                Logout
+              </button>
             </NavigationMenuLink>
           </NavigationMenuItem>
         )}

@@ -5,6 +5,7 @@ import SignUp from "./pages/SignUp"
 import Layout from "./pages/Layout"
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import Workspace from "./pages/Workspace"
 
 export function App() {
   const queryClient = new QueryClient({
@@ -24,6 +25,7 @@ export function App() {
             <Route index element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
+            <Route path="/workspace" element={<Workspace />} />
           </Route>
         </Routes>
       </BrowserRouter>

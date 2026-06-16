@@ -1,13 +1,10 @@
 import { LoginCard } from "@/components/LoginCard"
-import { useCurrentUser } from "@/lib/queries/userQueries"
 
 export default function Login() {
-  const { data: user } = useCurrentUser()
 
   return (
-    <div>
+    <div className="flex flex-col items-center min-h-screen pt-20 ">
       <LoginCard />
-      <div>Hello: {user?.username}</div>
     </div>
   )
 }
