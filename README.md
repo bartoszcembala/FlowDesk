@@ -1,4 +1,4 @@
-# 🧠 FlowDesk: Project Management App ( Inspired by Trello / Jira) [APP IN DEVELOPMEN]
+# 🧠 FlowDesk: Project Management App [APP IN DEVELOPMEN]
 
 Full-stack real-time project management application inspired by Trello and Jira.  
 
