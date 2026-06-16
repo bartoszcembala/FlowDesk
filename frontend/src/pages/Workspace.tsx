@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { useCreateWorkspace } from "@/lib/queries/workspaceQueries"
 
 type Task = {
   id: string
@@ -139,7 +140,30 @@ export default function Workspace() {
       tasks: [],
     },
   ])
-  console.log(columns)
+
+  const { createWorkspace } = useCreateWorkspace()
+  const createWorkspaceFn = async () => {
+    try {
+      const workspace = await createWorkspace({
+        name: "name2",
+      })
+      setColumns(
+        workspace.columns.map((column) => ({
+          id: column.id,
+          title: column.title,
+          tasks: column.tasks.map((task) => ({
+            id: task.id,
+            title: task.title,
+          })),
+        }))
+      )
+
+      console.log(workspace)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   function openAddTaskDialog(columnId: string) {
     setSelectedColumnId(columnId)
     setIsTaskDialogOpen(true)
@@ -300,6 +324,12 @@ export default function Workspace() {
       </SortableContext>
       <button onClick={addColumn} className="rounded-lg border px-4 py-2">
         Add Column
+      </button>
+      <button
+        onClick={createWorkspaceFn}
+        className="rounded-lg border px-4 py-2"
+      >
+        Create Workspace
       </button>
       <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
         <DialogContent>

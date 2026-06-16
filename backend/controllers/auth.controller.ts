@@ -125,7 +125,7 @@ export async function login(req: Request, res: Response, next: any) {
   }
 }
 
-export function logout(req: Request, res: Response) {
+export async function logout(req: Request, res: Response) {
   try {
     res.clearCookie("jwt", {
       httpOnly: true,

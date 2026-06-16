@@ -16,3 +16,24 @@ export interface User {
   createdAt: string
   updatedAt: string
 }
+
+export interface Task {
+  id: string
+  title: string
+  description?: string
+  position: number
+  columnId: string
+}
+
+export interface Column {
+  id: string
+  title: string
+  position: number
+  tasks: Task[]
+}
+
+export interface Workspace {
+  id: string
+  name: string
+  columns: Column[]
+}
