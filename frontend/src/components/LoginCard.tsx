@@ -14,15 +14,19 @@ import { useLogin } from "@/lib/queries/userQueries"
 import type { LoginFormInputs } from "@/types"
 
 import { useForm, type SubmitHandler } from "react-hook-form"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+import { toast } from "sonner"
 
 export function LoginCard() {
+  const navigate = useNavigate()
   const { login } = useLogin()
   const { register, handleSubmit, reset } = useForm<LoginFormInputs>()
 
   const onSubmit: SubmitHandler<LoginFormInputs> = (data) => {
-
-    login(data)
+    login(data).then(() => {
+      navigate("/workspace")
+      toast.success("Logged in successfully", { position: "bottom-center" })
+    })
 
     reset()
   }
@@ -58,7 +62,7 @@ export function LoginCard() {
                 <Label htmlFor="password">Password</Label>
                 <a
                   href="#"
-                  className="inline-block ml-auto text-sm underline-offset-4 hover:underline"
+                  className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
                 >
                   Forgot your password?
                 </a>
@@ -72,7 +76,7 @@ export function LoginCard() {
             </div>
           </div>
         </CardContent>
-        <CardFooter className="flex-col gap-2 mt-4">
+        <CardFooter className="mt-4 flex-col gap-2">
           <Button type="submit" className="w-full">
             Login
           </Button>

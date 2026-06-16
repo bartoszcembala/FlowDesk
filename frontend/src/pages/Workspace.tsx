@@ -10,6 +10,14 @@ import {
 } from "@dnd-kit/sortable"
 
 import { CSS } from "@dnd-kit/utilities"
+import {
+  DialogContent,
+  Dialog,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 
 type Task = {
   id: string
@@ -37,14 +45,20 @@ function SortableTask({ task }: { task: Task }) {
       }}
       {...attributes}
       {...listeners}
-      className="cursor-grab rounded-lg border p-4"
+      className="cursor-grab rounded-lg border px-5 py-2"
     >
       {task.title}
     </div>
   )
 }
 
-function SortableColumn({ column }: { column: Column }) {
+function SortableColumn({
+  column,
+  addTask,
+}: {
+  column: Column
+  addTask: (columnId: string) => void
+}) {
   const { setNodeRef, attributes, listeners, transform, transition } =
     useSortable({
       id: column.id,
@@ -60,9 +74,9 @@ function SortableColumn({ column }: { column: Column }) {
       className="w-80 rounded-xl border p-4"
     >
       <div
+        className="mb-4 cursor-grab text-2xl font-bold"
         {...attributes}
         {...listeners}
-        className="mb-4 cursor-grab text-2xl font-bold"
       >
         {column.title}
       </div>
@@ -77,11 +91,23 @@ function SortableColumn({ column }: { column: Column }) {
           ))}
         </div>
       </SortableContext>
+      <button
+        onClick={() => {
+          addTask(column.id)
+        }}
+        className="mt-4 cursor-pointer rounded border px-3 py-1"
+      >
+        Add Task
+      </button>
     </div>
   )
 }
 
 export default function Workspace() {
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false)
+  const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null)
+  const [taskTitle, setTaskTitle] = useState("")
+
   const [columns, setColumns] = useState<Column[]>([
     {
       id: "todo",
@@ -113,6 +139,51 @@ export default function Workspace() {
       tasks: [],
     },
   ])
+  console.log(columns)
+  function openAddTaskDialog(columnId: string) {
+    setSelectedColumnId(columnId)
+    setIsTaskDialogOpen(true)
+  }
+
+  function createTask() {
+    if (!selectedColumnId || !taskTitle.trim()) return
+
+    setColumns((prev) =>
+      prev.map((column) =>
+        column.id === selectedColumnId
+          ? {
+              ...column,
+              tasks: [
+                ...column.tasks,
+                {
+                  id: crypto.randomUUID(),
+                  title: taskTitle,
+                },
+              ],
+            }
+          : column
+      )
+    )
+
+    setTaskTitle("")
+    setSelectedColumnId(null)
+    setIsTaskDialogOpen(false)
+  }
+
+  function addColumn() {
+    const title = prompt("Column name")
+
+    if (!title) return
+
+    setColumns((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        title,
+        tasks: [],
+      },
+    ])
+  }
 
   function findColumn(taskOrColumnId: string) {
     const column = columns.find((column) => column.id === taskOrColumnId)
@@ -219,10 +290,32 @@ export default function Workspace() {
       >
         <div className="flex gap-6 p-10">
           {columns.map((column) => (
-            <SortableColumn key={column.id} column={column} />
+            <SortableColumn
+              key={column.id}
+              column={column}
+              addTask={openAddTaskDialog}
+            />
           ))}
         </div>
       </SortableContext>
+      <button onClick={addColumn} className="rounded-lg border px-4 py-2">
+        Add Column
+      </button>
+      <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Task</DialogTitle>
+          </DialogHeader>
+
+          <Input
+            value={taskTitle}
+            onChange={(e) => setTaskTitle(e.target.value)}
+            placeholder="Task title..."
+          />
+
+          <Button onClick={createTask}>Create</Button>
+        </DialogContent>
+      </Dialog>
     </DndContext>
   )
 }
