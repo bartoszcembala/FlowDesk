@@ -10,10 +10,8 @@ import {
 import { useQueryClient } from "@tanstack/react-query"
 import { useCurrentUser } from "@/lib/queries/userQueries"
 import { toast } from "sonner"
-import { useWorkspaces } from "@/lib/queries/workspaceQueries"
 
 export function NavigationBar() {
-  const { workspaces } = useWorkspaces()
   const queryClient = useQueryClient()
   const { data: user } = useCurrentUser()
   const navigate = useNavigate()
@@ -76,10 +74,7 @@ export function NavigationBar() {
                   asChild
                   className={navigationMenuTriggerStyle()}
                 >
-                  <Link
-                    className="text-neutral-200"
-                    to={`/workspace/${workspaces[0].id}`}
-                  >
+                  <Link className="text-neutral-200" to={`/workspace/`}>
                     Workspace
                   </Link>
                 </NavigationMenuLink>

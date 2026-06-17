@@ -1,12 +1,13 @@
 # 🧠 FlowDesk: Project Management App [APP IN DEVELOPMEN]
 
-Full-stack real-time project management application inspired by Trello and Jira.  
+Full-stack real-time project management application inspired by Trello and Jira.
 
-![screenshot](.//assets/image1.png)[screenshot](.//assets/image2.png)
+![screenshot](.//assets/image1.png)![screenshot](.//assets/image2.png)
 
 ---
 
 ## 🚀 Live Demo
+
 IN WORK
 
 ---
@@ -14,6 +15,7 @@ IN WORK
 ## ⚙️ Tech Stack
 
 ### Frontend
+
 - React + TypeScript
 - Vite
 - React Router
@@ -25,6 +27,7 @@ IN WORK
 - React Hook Form + Zod
 
 ### Backend
+
 - Node.js + Express
 - TypeScript
 - PostgreSQL
@@ -34,6 +37,7 @@ IN WORK
 - Zod validation
 
 ### DevOps
+
 - Docker + Docker Compose
 - GitHub Actions (CI/CD)
 - Environment-based configuration
@@ -43,6 +47,7 @@ IN WORK
 ## ✨ Features
 
 ### 🔐 Authentication
+
 - Register / Login / Logout
 - JWT authentication via httpOnly cookies
 - Protected routes
@@ -51,6 +56,7 @@ IN WORK
 ---
 
 ### 📁 Boards (Projects)
+
 - Create / delete / manage boards
 - Board ownership
 - Multi-board dashboard
@@ -58,6 +64,7 @@ IN WORK
 ---
 
 ### 🧱 Columns (Kanban)
+
 - Default and custom columns
 - Reordering columns
 - Persistent column positions
@@ -65,6 +72,7 @@ IN WORK
 ---
 
 ### ✅ Tasks
+
 - Create / edit / delete tasks
 - Task description and details
 - Priority levels (Low / Medium / High / Critical)
@@ -74,6 +82,7 @@ IN WORK
 ---
 
 ### 🖱️ Drag & Drop
+
 - Move tasks between columns
 - Reorder tasks inside columns
 - Persistent ordering in database
@@ -81,6 +90,7 @@ IN WORK
 ---
 
 ### 💬 Comments
+
 - Add / edit / delete comments
 - Real-time comment updates
 - Task discussion threads
@@ -88,6 +98,7 @@ IN WORK
 ---
 
 ### ⚡ Real-time Collaboration
+
 - WebSocket (Socket.io)
 - Live task updates
 - Live comments
@@ -97,6 +108,7 @@ IN WORK
 ---
 
 ### 👥 Team Collaboration
+
 - Invite users to boards
 - Role-based access control:
   - Owner
@@ -107,6 +119,7 @@ IN WORK
 ---
 
 ### 📊 Activity Log
+
 - Track all board actions
 - Task changes history
 - Comment and update tracking
@@ -115,6 +128,7 @@ IN WORK
 ---
 
 ### 🔎 Search & Filters
+
 - Search tasks by title/description
 - Filter by:
   - Assignee
@@ -125,12 +139,14 @@ IN WORK
 ---
 
 ### 📎 Attachments
+
 - File uploads per task
 - Cloud storage integration (e.g. Cloudinary / S3)
 
 ---
 
 ### 🔔 Notifications
+
 - Task assignments
 - New comments
 - Due date reminders

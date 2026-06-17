@@ -21,9 +21,9 @@ import {
   useWorkspace,
   useWorkspaces,
 } from "@/lib/queries/workspaceQueries"
-import { WorkspaceBoard, type Column } from "@/components/WorkspaceBoard"
+import { WorkspaceBoard } from "@/components/WorkspaceBoard"
 import { Link, useParams } from "react-router-dom"
-import type { Task, Workspace } from "@/types"
+import type { Column, Task, Workspace } from "@/types"
 
 export default function Workspace() {
   const { workspaceId } = useParams()
@@ -103,20 +103,6 @@ export default function Workspace() {
     setIsTaskDialogOpen(false)
   }
 
-  function addColumn() {
-    const title = prompt("Column name")
-    if (!title) return
-
-    setColumns((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        title,
-        tasks: [],
-      },
-    ])
-  }
-  console.log(columns)
   async function createWorkspaceFn() {
     try {
       const workspace = await createWorkspace({
@@ -140,7 +126,7 @@ export default function Workspace() {
   }
 
   return (
-    <div className="mx-10">
+    <div className="mx-12">
       <Collapsible
         open={isOpen}
         onOpenChange={setIsOpen}
@@ -184,13 +170,6 @@ export default function Workspace() {
         addTask={openAddTaskDialog}
         toggleTaskCompleted={toggleTaskCompleted}
       />
-
-      <button
-        onClick={addColumn}
-        className="cursor-pointer rounded-lg border px-4 py-2"
-      >
-        Add Column
-      </button>
 
       <button
         onClick={createWorkspaceFn}

@@ -1,4 +1,4 @@
-import type { Task } from "@/types"
+import type { Column, Task } from "@/types"
 import { DndContext, closestCorners, type DragEndEvent } from "@dnd-kit/core"
 import {
   SortableContext,
@@ -9,13 +9,9 @@ import {
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { Checkbox } from "./ui/checkbox"
-
-
-export type Column = {
-  id: string
-  title: string
-  tasks: Task[]
-}
+import { HiOutlineBars3 } from "react-icons/hi2"
+import { MdDragIndicator } from "react-icons/md"
+import { HiArrowTopRightOnSquare } from "react-icons/hi2"
 
 function SortableTask({
   task,
@@ -34,18 +30,21 @@ function SortableTask({
         transform: CSS.Transform.toString(transform),
         transition,
       }}
-      className="flex items-center gap-3 rounded-lg border px-5 py-2"
+      {...attributes}
+      {...listeners}
+      className="flex cursor-grab items-center gap-3 rounded-lg border px-2 py-2 active:cursor-grabbing"
     >
+      <MdDragIndicator className="h-5 w-5" />
+
       <Checkbox
         checked={task.completed}
         onCheckedChange={() => toggleTaskCompleted(task.id)}
-        className="cursor-pointer w-5 h-5"
+        onPointerDown={(e) => e.stopPropagation()}
+        className="h-5 w-5 cursor-pointer"
       />
 
       <div
-        {...attributes}
-        {...listeners}
-        className={`flex-1 cursor-grab ${
+        className={`flex-1 ${
           task.completed ? "text-muted-foreground line-through" : ""
         }`}
       >
@@ -77,10 +76,11 @@ function SortableColumn({
       className="w-80 rounded-xl border p-4"
     >
       <div
-        className="mb-4 cursor-grab text-2xl font-bold"
+        className="mb-4 flex cursor-grab items-center gap-2 text-2xl font-bold"
         {...attributes}
         {...listeners}
       >
+        <HiOutlineBars3 />
         {column.title}
       </div>
 
@@ -211,24 +211,45 @@ export function WorkspaceBoard({
       })
     )
   }
+  function addColumn() {
+    const title = prompt("Column name")
+    if (!title) return
 
+    setColumns((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        title,
+        tasks: [],
+      },
+    ])
+  }
   return (
-    <DndContext collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
-      <SortableContext
-        items={columns.map((column) => column.id)}
-        strategy={horizontalListSortingStrategy}
+    <div className="flex gap-6">
+      <DndContext collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
+        <SortableContext
+          items={columns.map((column) => column.id)}
+          strategy={horizontalListSortingStrategy}
+        >
+          <div className="flex gap-6 py-6">
+            {columns.map((column) => (
+              <SortableColumn
+                key={column.id}
+                column={column}
+                addTask={addTask}
+                toggleTaskCompleted={toggleTaskCompleted}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+      <button
+        onClick={addColumn}
+        className="mt-6 h-12 cursor-pointer rounded-lg border px-6 tracking-wide flex items-center  gap-2"
       >
-        <div className="flex gap-6  py-6">
-          {columns.map((column) => (
-            <SortableColumn
-              key={column.id}
-              column={column}
-              addTask={addTask}
-              toggleTaskCompleted={toggleTaskCompleted}
-            />
-          ))}
-        </div>
-      </SortableContext>
-    </DndContext>
+        Add Column
+        <HiArrowTopRightOnSquare className="w-5 h-5"/>
+      </button>
+    </div>
   )
 }
