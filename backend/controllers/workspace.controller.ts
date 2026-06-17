@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 
 const prisma = new PrismaClient();
 
-export async function getWorkspace(req: Request, res: Response) {
+export async function createWorkspace(req: Request, res: Response) {
   console.log(req.body);
   const { name } = req.body;
   const userId = req.userId;
@@ -96,3 +96,88 @@ export async function getWorkspace(req: Request, res: Response) {
     });
   }
 }
+
+export const getUserWorkspaces = async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId;
+
+    const workspaces = await prisma.workspace.findMany({
+      where: {
+        userId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        columns: {
+          orderBy: {
+            position: "asc",
+          },
+          include: {
+            tasks: {
+              orderBy: {
+                position: "asc",
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        workspaces,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to get workspaces",
+    });
+  }
+};
+
+export const getWorkspace = async (req: Request, res: Response) => {
+  try {
+    const { workspaceId } = req.params;
+    const userId = req.userId;
+
+    const workspace = await prisma.workspace.findFirst({
+      where: {
+        id: workspaceId,
+        userId,
+      },
+      include: {
+        columns: {
+          orderBy: {
+            position: "asc",
+          },
+          include: {
+            tasks: {
+              orderBy: {
+                position: "asc",
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!workspace) {
+      return res.status(404).json({
+        message: "Workspace not found",
+      });
+    }
+
+    return res.status(200).json({
+      data: {
+        workspace,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};

@@ -35,3 +35,65 @@ export function useCreateWorkspace() {
     isCreatingWorkspace: mutation.isPending,
   }
 }
+
+import { useQuery } from "@tanstack/react-query"
+
+export function useWorkspaces() {
+  const query = useQuery({
+    queryKey: ["workspaces"],
+
+    queryFn: async () => {
+      const res = await fetch(
+        "http://localhost:3000/api/workspaces/get-workspaces",
+        {
+          credentials: "include",
+        }
+      )
+
+      const responseReady = await res.json()
+
+      if (!res.ok) {
+        throw new Error(responseReady.message || "Failed to get workspaces")
+      }
+
+      return responseReady.data.workspaces
+    },
+  })
+
+  return {
+    workspaces: query.data,
+    isLoadingWorkspaces: query.isPending,
+  }
+}
+
+export function useWorkspace(workspaceId: string) {
+  const query = useQuery({
+    queryKey: ["workspace", workspaceId],
+
+    queryFn: async () => {
+      const res = await fetch(
+        `http://localhost:3000/api/workspaces/${workspaceId}`,
+        {
+          credentials: "include",
+        }
+      )
+
+      const responseReady = await res.json()
+
+      if (!res.ok) {
+        throw new Error(responseReady.message)
+      }
+
+      return responseReady.data.workspace
+    },
+
+    enabled: !!workspaceId,
+  })
+
+  return {
+    workspace: query.data,
+    isLoadingWorkspace: query.isPending,
+    workspaceError: query.error,
+    refetchWorkspace: query.refetch,
+  }
+}

@@ -1,152 +1,56 @@
-import { useState } from "react"
-import { DndContext, closestCorners, type DragEndEvent } from "@dnd-kit/core"
+import { useEffect, useState } from "react"
+import { ChevronsUpDown } from "lucide-react"
 
+import { Button } from "@/components/ui/button"
 import {
-  SortableContext,
-  useSortable,
-  arrayMove,
-  verticalListSortingStrategy,
-  horizontalListSortingStrategy,
-} from "@dnd-kit/sortable"
-
-import { CSS } from "@dnd-kit/utilities"
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 import {
-  DialogContent,
   Dialog,
+  DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { useCreateWorkspace } from "@/lib/queries/workspaceQueries"
 
-type Task = {
-  id: string
-  title: string
-}
-
-type Column = {
-  id: string
-  title: string
-  tasks: Task[]
-}
-
-function SortableTask({ task }: { task: Task }) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({
-      id: task.id,
-    })
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition,
-      }}
-      {...attributes}
-      {...listeners}
-      className="cursor-grab rounded-lg border px-5 py-2"
-    >
-      {task.title}
-    </div>
-  )
-}
-
-function SortableColumn({
-  column,
-  addTask,
-}: {
-  column: Column
-  addTask: (columnId: string) => void
-}) {
-  const { setNodeRef, attributes, listeners, transform, transition } =
-    useSortable({
-      id: column.id,
-    })
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition,
-      }}
-      className="w-80 rounded-xl border p-4"
-    >
-      <div
-        className="mb-4 cursor-grab text-2xl font-bold"
-        {...attributes}
-        {...listeners}
-      >
-        {column.title}
-      </div>
-
-      <SortableContext
-        items={column.tasks.map((task) => task.id)}
-        strategy={verticalListSortingStrategy}
-      >
-        <div className="space-y-3">
-          {column.tasks.map((task) => (
-            <SortableTask key={task.id} task={task} />
-          ))}
-        </div>
-      </SortableContext>
-      <button
-        onClick={() => {
-          addTask(column.id)
-        }}
-        className="mt-4 cursor-pointer rounded border px-3 py-1"
-      >
-        Add Task
-      </button>
-    </div>
-  )
-}
+import {
+  useCreateWorkspace,
+  useWorkspace,
+  useWorkspaces,
+} from "@/lib/queries/workspaceQueries"
+import { WorkspaceBoard, type Column } from "@/components/WorkspaceBoard"
+import { Link, useParams } from "react-router-dom"
 
 export default function Workspace() {
+  const { workspaces } = useWorkspaces()
+  const { createWorkspace } = useCreateWorkspace()
+  const { workspaceId } = useParams()
+  const { workspace } = useWorkspace(workspaceId!)
+  const [columns, setColumns] = useState<Column[]>([])
+  const [isOpen, setIsOpen] = useState(false)
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false)
   const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null)
   const [taskTitle, setTaskTitle] = useState("")
 
-  const [columns, setColumns] = useState<Column[]>([
-    {
-      id: "todo",
-      title: "To Do",
-      tasks: [
-        {
-          id: "1",
-          title: "Add tests to homepage",
-        },
-        {
-          id: "2",
-          title: "Fix styling in about section",
-        },
-      ],
-    },
-    {
-      id: "doing",
-      title: "Doing",
-      tasks: [
-        {
-          id: "3",
-          title: "Learn how to center a div",
-        },
-      ],
-    },
-    {
-      id: "done",
-      title: "Done",
-      tasks: [],
-    },
-  ])
+  useEffect(() => {
+    if (!workspaces?.[0]) return
 
-  const { createWorkspace } = useCreateWorkspace()
-  const createWorkspaceFn = async () => {
-    try {
-      const workspace = await createWorkspace({
-        name: "name2",
-      })
+    if (!workspaceId) {
+      setColumns(
+        workspaces[0].columns.map((column) => ({
+          id: column.id,
+          title: column.title,
+          tasks: column.tasks.map((task) => ({
+            id: task.id,
+            title: task.title,
+          })),
+        }))
+      )
+    }
+
+    if (workspaceId) {
       setColumns(
         workspace.columns.map((column) => ({
           id: column.id,
@@ -157,12 +61,8 @@ export default function Workspace() {
           })),
         }))
       )
-
-      console.log(workspace)
-    } catch (err) {
-      console.error(err)
     }
-  }
+  }, [workspaces])
 
   function openAddTaskDialog(columnId: string) {
     setSelectedColumnId(columnId)
@@ -196,7 +96,6 @@ export default function Workspace() {
 
   function addColumn() {
     const title = prompt("Column name")
-
     if (!title) return
 
     setColumns((prev) => [
@@ -209,128 +108,86 @@ export default function Workspace() {
     ])
   }
 
-  function findColumn(taskOrColumnId: string) {
-    const column = columns.find((column) => column.id === taskOrColumnId)
-
-    if (column) return column
-
-    return columns.find((column) =>
-      column.tasks.some((task) => task.id === taskOrColumnId)
-    )
-  }
-
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event
-
-    if (!over) return
-
-    const activeId = String(active.id)
-    const overId = String(over.id)
-
-    if (activeId === overId) return
-
-    // przesuwanie kolumn
-    const activeColumnIndex = columns.findIndex(
-      (column) => column.id === activeId
-    )
-
-    const overColumnIndex = columns.findIndex((column) => column.id === overId)
-
-    if (activeColumnIndex !== -1 && overColumnIndex !== -1) {
-      setColumns((columns) =>
-        arrayMove(columns, activeColumnIndex, overColumnIndex)
-      )
-
-      return
-    }
-
-    // przesuwanie tasków
-    const activeColumn = findColumn(activeId)
-    const overColumn = findColumn(overId)
-
-    if (!activeColumn || !overColumn) return
-
-    const activeTaskIndex = activeColumn.tasks.findIndex(
-      (task) => task.id === activeId
-    )
-
-    const overTaskIndex = overColumn.tasks.findIndex(
-      (task) => task.id === overId
-    )
-
-    // ten sam set
-    if (activeColumn.id === overColumn.id) {
-      setColumns((columns) =>
-        columns.map((column) =>
-          column.id === activeColumn.id
-            ? {
-                ...column,
-                tasks: arrayMove(column.tasks, activeTaskIndex, overTaskIndex),
-              }
-            : column
-        )
-      )
-
-      return
-    }
-
-    // między setami
-    const activeTask = activeColumn.tasks[activeTaskIndex]
-
-    setColumns((columns) =>
-      columns.map((column) => {
-        if (column.id === activeColumn.id) {
-          return {
-            ...column,
-            tasks: column.tasks.filter((task) => task.id !== activeId),
-          }
-        }
-
-        if (column.id === overColumn.id) {
-          const newTasks = [...column.tasks]
-
-          if (overTaskIndex === -1) {
-            newTasks.push(activeTask)
-          } else {
-            newTasks.splice(overTaskIndex, 0, activeTask)
-          }
-
-          return {
-            ...column,
-            tasks: newTasks,
-          }
-        }
-
-        return column
+  async function createWorkspaceFn() {
+    try {
+      const workspace = await createWorkspace({
+        name: "name4",
       })
-    )
+
+      setColumns(
+        workspace.columns.map((column) => ({
+          id: column.id,
+          title: column.title,
+          tasks: column.tasks.map((task) => ({
+            id: task.id,
+            title: task.title,
+          })),
+        }))
+      )
+    } catch (err) {
+      console.error(err)
+    }
   }
+
+  const currentWorkspaceName = workspaces?.[0]?.name ?? "No workspace"
 
   return (
-    <DndContext collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
-      <SortableContext
-        items={columns.map((column) => column.id)}
-        strategy={horizontalListSortingStrategy}
+    <div className="mx-10">
+      <Collapsible
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        className="mt-6 flex w-87.5 flex-col gap-2"
       >
-        <div className="flex gap-6 p-10">
-          {columns.map((column) => (
-            <SortableColumn
-              key={column.id}
-              column={column}
-              addTask={openAddTaskDialog}
-            />
-          ))}
+        <div className="flex items-center justify-between gap-4 px-4">
+          <h4 className="text-xl font-semibold tracking-wide">
+            {workspaceId ? workspace?.name : currentWorkspaceName}
+          </h4>
+
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8 cursor-pointer"
+            >
+              <ChevronsUpDown />
+              <span className="sr-only">Toggle details</span>
+            </Button>
+          </CollapsibleTrigger>
         </div>
-      </SortableContext>
-      <button onClick={addColumn} className="rounded-lg border px-4 py-2">
+
+        <CollapsibleContent className="flex flex-col gap-2">
+          {workspaces?.map((workspace) => (
+            <Link
+              key={workspace.id}
+              className="cursor-pointer rounded-md border px-4 py-2 text-sm font-medium"
+              to={`/workspace/${workspace.id}`}
+            >
+              {workspace.name}
+            </Link>
+          ))}
+        </CollapsibleContent>
+      </Collapsible>
+
+      <WorkspaceBoard
+        columns={columns}
+        setColumns={setColumns}
+        addTask={openAddTaskDialog}
+      />
+
+      <button
+        onClick={addColumn}
+        className="cursor-pointer rounded-lg border px-4 py-2"
+      >
         Add Column
       </button>
+
       <button
         onClick={createWorkspaceFn}
-        className="rounded-lg border px-4 py-2"
+        className="cursor-pointer rounded-lg border px-4 py-2"
       >
         Create Workspace
       </button>
+
       <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -346,6 +203,6 @@ export default function Workspace() {
           <Button onClick={createTask}>Create</Button>
         </DialogContent>
       </Dialog>
-    </DndContext>
+    </div>
   )
 }

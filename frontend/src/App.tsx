@@ -29,6 +29,7 @@ export function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/workspace" element={<Workspace />} />
+            <Route path="/workspace/:workspaceId" element={<Workspace />} />
           </Route>
         </Routes>
       </BrowserRouter>
