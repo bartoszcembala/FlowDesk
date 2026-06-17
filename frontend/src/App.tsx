@@ -35,7 +35,7 @@ export function App() {
       </BrowserRouter>
 
       <Toaster />
-      <ReactQueryDevtools initialIsOpen={false} />
+   
     </QueryClientProvider>
   )
 }

@@ -97,3 +97,49 @@ export function useWorkspace(workspaceId: string) {
     refetchWorkspace: query.refetch,
   }
 }
+
+export function useUpdateTaskCompleted(workspaceId: string) {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: async ({ taskId }: { taskId: string }) => {
+      const res = await fetch(
+        `http://localhost:3000/api/workspaces/${taskId}/completed`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            completed: true,
+          }),
+        }
+      )
+
+      const responseReady = await res.json()
+
+      if (!res.ok) {
+        throw new Error(responseReady.message)
+      }
+
+      return responseReady.data.task
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["workspace", workspaceId],
+      })
+    },
+  })
+
+  return {
+    updateTaskCompleted: mutation.mutate,
+    updateTaskCompletedAsync: mutation.mutateAsync,
+
+    isUpdatingTaskCompleted: mutation.isPending,
+    updateTaskCompletedError: mutation.error,
+
+    resetUpdateTaskCompleted: mutation.reset,
+  }
+}

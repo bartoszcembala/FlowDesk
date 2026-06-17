@@ -20,20 +20,21 @@ export interface User {
 export interface Task {
   id: string
   title: string
+  completed: boolean
   description?: string
-  position: number
-  columnId: string
 }
 
 export interface Column {
   id: string
   title: string
-  position: number
   tasks: Task[]
 }
 
 export interface Workspace {
   id: string
+  userId: string
   name: string
   columns: Column[]
+  createdAt: string
+  updatedAt: string
 }

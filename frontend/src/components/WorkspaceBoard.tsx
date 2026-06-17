@@ -1,3 +1,4 @@
+import type { Task } from "@/types"
 import { DndContext, closestCorners, type DragEndEvent } from "@dnd-kit/core"
 import {
   SortableContext,
@@ -7,11 +8,8 @@ import {
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
+import { Checkbox } from "./ui/checkbox"
 
-export type Task = {
-  id: string
-  title: string
-}
 
 export type Column = {
   id: string
@@ -19,7 +17,13 @@ export type Column = {
   tasks: Task[]
 }
 
-function SortableTask({ task }: { task: Task }) {
+function SortableTask({
+  task,
+  toggleTaskCompleted,
+}: {
+  task: Task
+  toggleTaskCompleted: (taskId: string) => void
+}) {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: task.id })
 
@@ -30,11 +34,23 @@ function SortableTask({ task }: { task: Task }) {
         transform: CSS.Transform.toString(transform),
         transition,
       }}
-      {...attributes}
-      {...listeners}
-      className="cursor-grab rounded-lg border px-5 py-2"
+      className="flex items-center gap-3 rounded-lg border px-5 py-2"
     >
-      {task.title}
+      <Checkbox
+        checked={task.completed}
+        onCheckedChange={() => toggleTaskCompleted(task.id)}
+        className="cursor-pointer w-5 h-5"
+      />
+
+      <div
+        {...attributes}
+        {...listeners}
+        className={`flex-1 cursor-grab ${
+          task.completed ? "text-muted-foreground line-through" : ""
+        }`}
+      >
+        {task.title}
+      </div>
     </div>
   )
 }
@@ -42,9 +58,11 @@ function SortableTask({ task }: { task: Task }) {
 function SortableColumn({
   column,
   addTask,
+  toggleTaskCompleted,
 }: {
   column: Column
   addTask: (columnId: string) => void
+  toggleTaskCompleted: (taskId: string) => void
 }) {
   const { setNodeRef, attributes, listeners, transform, transition } =
     useSortable({ id: column.id })
@@ -72,7 +90,11 @@ function SortableColumn({
       >
         <div className="space-y-3">
           {column.tasks.map((task) => (
-            <SortableTask key={task.id} task={task} />
+            <SortableTask
+              key={task.id}
+              task={task}
+              toggleTaskCompleted={toggleTaskCompleted}
+            />
           ))}
         </div>
       </SortableContext>
@@ -91,12 +113,14 @@ type WorkspaceBoardProps = {
   columns: Column[]
   setColumns: React.Dispatch<React.SetStateAction<Column[]>>
   addTask: (columnId: string) => void
+  toggleTaskCompleted: (taskId: string) => void
 }
 
 export function WorkspaceBoard({
   columns,
   setColumns,
   addTask,
+  toggleTaskCompleted,
 }: WorkspaceBoardProps) {
   function findColumn(taskOrColumnId: string) {
     const column = columns.find((column) => column.id === taskOrColumnId)
@@ -194,12 +218,13 @@ export function WorkspaceBoard({
         items={columns.map((column) => column.id)}
         strategy={horizontalListSortingStrategy}
       >
-        <div className="flex gap-6 px-4 py-6">
+        <div className="flex gap-6  py-6">
           {columns.map((column) => (
             <SortableColumn
               key={column.id}
               column={column}
               addTask={addTask}
+              toggleTaskCompleted={toggleTaskCompleted}
             />
           ))}
         </div>

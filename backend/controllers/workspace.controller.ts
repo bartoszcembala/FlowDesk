@@ -181,3 +181,37 @@ export const getWorkspace = async (req: Request, res: Response) => {
     });
   }
 };
+
+export async function updateTaskCompleted(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  try {
+    const { taskId } = req.params;
+    const { completed } = req.body;
+
+    if (typeof completed !== "boolean") {
+      res.status(400).json({
+        message: "completed must be a boolean",
+      });
+      return;
+    }
+
+    const task = await prisma.task.update({
+      where: {
+        id: taskId,
+      },
+      data: {
+        completed,
+      },
+    });
+
+    res.status(200).json(task);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: "Failed to update task",
+    });
+  }
+}

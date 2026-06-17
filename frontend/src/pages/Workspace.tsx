@@ -17,56 +17,65 @@ import { Input } from "@/components/ui/input"
 
 import {
   useCreateWorkspace,
+  useUpdateTaskCompleted,
   useWorkspace,
   useWorkspaces,
 } from "@/lib/queries/workspaceQueries"
 import { WorkspaceBoard, type Column } from "@/components/WorkspaceBoard"
 import { Link, useParams } from "react-router-dom"
+import type { Task, Workspace } from "@/types"
 
 export default function Workspace() {
+  const { workspaceId } = useParams()
   const { workspaces } = useWorkspaces()
   const { createWorkspace } = useCreateWorkspace()
-  const { workspaceId } = useParams()
   const { workspace } = useWorkspace(workspaceId!)
   const [columns, setColumns] = useState<Column[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false)
   const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null)
   const [taskTitle, setTaskTitle] = useState("")
+  const { updateTaskCompleted } = useUpdateTaskCompleted(workspaceId!)
 
   useEffect(() => {
-    if (!workspaces?.[0]) return
+    if (!workspace) return
 
-    if (!workspaceId) {
-      setColumns(
-        workspaces[0].columns.map((column) => ({
-          id: column.id,
-          title: column.title,
-          tasks: column.tasks.map((task) => ({
-            id: task.id,
-            title: task.title,
-          })),
-        }))
-      )
-    }
-
-    if (workspaceId) {
-      setColumns(
-        workspace.columns.map((column) => ({
-          id: column.id,
-          title: column.title,
-          tasks: column.tasks.map((task) => ({
-            id: task.id,
-            title: task.title,
-          })),
-        }))
-      )
-    }
-  }, [workspaces])
-
+    setColumns(
+      workspace.columns.map((column: Column) => ({
+        id: column.id,
+        title: column.title,
+        //position: column.position,
+        tasks: column.tasks.map((task: Task) => ({
+          id: task.id,
+          title: task.title,
+          completed: task.completed ?? false,
+        })),
+      }))
+    )
+  }, [workspace, workspaceId])
+  console.log("col", columns)
   function openAddTaskDialog(columnId: string) {
     setSelectedColumnId(columnId)
     setIsTaskDialogOpen(true)
+  }
+
+  function toggleTaskCompleted(taskId: string) {
+    updateTaskCompleted({
+      taskId,
+    })
+    setColumns((prev) =>
+      prev.map((column) => ({
+        ...column,
+        tasks: column.tasks.map((task) =>
+          task.id === taskId
+            ? {
+                ...task,
+                completed: !task.completed,
+              }
+            : task
+        ),
+      }))
+    )
   }
 
   function createTask() {
@@ -107,7 +116,7 @@ export default function Workspace() {
       },
     ])
   }
-
+  console.log(columns)
   async function createWorkspaceFn() {
     try {
       const workspace = await createWorkspace({
@@ -115,12 +124,13 @@ export default function Workspace() {
       })
 
       setColumns(
-        workspace.columns.map((column) => ({
+        workspace.columns.map((column: Column) => ({
           id: column.id,
           title: column.title,
-          tasks: column.tasks.map((task) => ({
+          tasks: column.tasks.map((task: Task) => ({
             id: task.id,
             title: task.title,
+            completed: task.completed ?? false,
           })),
         }))
       )
@@ -129,8 +139,6 @@ export default function Workspace() {
     }
   }
 
-  const currentWorkspaceName = workspaces?.[0]?.name ?? "No workspace"
-
   return (
     <div className="mx-10">
       <Collapsible
@@ -138,9 +146,10 @@ export default function Workspace() {
         onOpenChange={setIsOpen}
         className="mt-6 flex w-87.5 flex-col gap-2"
       >
-        <div className="flex items-center justify-between gap-4 px-4">
+        <div className="flex items-center justify-between gap-4 rounded-sm bg-neutral-900 px-4 py-1">
           <h4 className="text-xl font-semibold tracking-wide">
-            {workspaceId ? workspace?.name : currentWorkspaceName}
+            <span className="text-gray-300">Workspace: </span>
+            <span className="font-bold tracking-wide">{workspace?.name}</span>
           </h4>
 
           <CollapsibleTrigger asChild>
@@ -156,8 +165,9 @@ export default function Workspace() {
         </div>
 
         <CollapsibleContent className="flex flex-col gap-2">
-          {workspaces?.map((workspace) => (
+          {workspaces?.map((workspace: Workspace) => (
             <Link
+              onClick={() => setIsOpen(false)}
               key={workspace.id}
               className="cursor-pointer rounded-md border px-4 py-2 text-sm font-medium"
               to={`/workspace/${workspace.id}`}
@@ -172,6 +182,7 @@ export default function Workspace() {
         columns={columns}
         setColumns={setColumns}
         addTask={openAddTaskDialog}
+        toggleTaskCompleted={toggleTaskCompleted}
       />
 
       <button

@@ -2,6 +2,8 @@
 
 Full-stack real-time project management application inspired by Trello and Jira.  
 
+![screenshot](.//assets/image1.png)[screenshot](.//assets/image2.png)
+
 ---
 
 ## 🚀 Live Demo
