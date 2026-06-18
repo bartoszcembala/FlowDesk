@@ -37,4 +37,14 @@ export interface Workspace {
   columns: Column[]
   createdAt: string
   updatedAt: string
+  members: {
+    id: string
+    role: "OWNER" | "MEMBER"
+    user: {
+      id: string
+      username: string
+      email: string
+      avatar?: string
+    }
+  }[]
 }

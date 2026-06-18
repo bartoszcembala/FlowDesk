@@ -16,27 +16,49 @@ datasource db {
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
-  username  String   
+  username  String
   password  String
   avatar    String?
 
-  workspaces Workspace[]
+  workspaceMemberships WorkspaceMember[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+
 model Workspace {
-  id         String      @id @default(cuid())
-  name       String
+  id        String   @id @default(cuid())
+  name      String
 
-  userId     String
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  members   WorkspaceMember[]
+  columns   Column[]
 
-  columns    Column[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+model WorkspaceMember {
+  id          String   @id @default(cuid())
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  role        WorkspaceRole @default(MEMBER)
+
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, workspaceId])
+  @@index([workspaceId])
+  @@index([userId])
+}
+
+enum WorkspaceRole {
+  OWNER
+  MEMBER
 }
 
 model Column {

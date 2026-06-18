@@ -21,6 +21,10 @@ export function useCreateWorkspace() {
 
       const responseReady = await res.json()
 
+      if (!res.ok) {
+        throw new Error(responseReady.message || "Failed to create workspace")
+      }
+
       return responseReady.data.workspace
     },
 

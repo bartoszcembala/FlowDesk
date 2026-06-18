@@ -55,9 +55,8 @@ export default function Workspace() {
   const { updateTaskCompleted } = useUpdateTaskCompleted(workspaceId!)
   const { updateWorkspaceLayout } = useUpdateWorkspaceLayout(workspaceId!)
   const { deleteTask } = useDeleteTask(workspaceId!)
-  const navigate = useNavigate()
   const [isChatOpen, setIsChatOpen] = useState(true)
-
+  console.log(workspace)
   useEffect(() => {
     if (!workspace) return
 
@@ -180,6 +179,10 @@ export default function Workspace() {
         >
           Create Workspace
         </button>
+      </div>
+      <div className="absolute top-6 left-200 flex">
+        {workspace?.members &&
+          workspace.members.map((member) => <span>{member.id}</span>)}
       </div>
       {/* Chat */}
       <div className="fixed top-20 right-5 z-20">

@@ -11,7 +11,13 @@ export async function createWorkspace(req: Request, res: Response) {
     const workspace = await prisma.workspace.create({
       data: {
         name,
-        userId,
+
+        members: {
+          create: {
+            userId,
+            role: "OWNER",
+          },
+        },
 
         columns: {
           create: [
@@ -20,18 +26,9 @@ export async function createWorkspace(req: Request, res: Response) {
               position: 0,
               tasks: {
                 create: [
-                  {
-                    title: "Learn Prisma",
-                    position: 0,
-                  },
-                  {
-                    title: "Setup React app",
-                    position: 1,
-                  },
-                  {
-                    title: "Read API docs",
-                    position: 2,
-                  },
+                  { title: "Learn Prisma", position: 0 },
+                  { title: "Setup React app", position: 1 },
+                  { title: "Read API docs", position: 2 },
                 ],
               },
             },
@@ -40,18 +37,9 @@ export async function createWorkspace(req: Request, res: Response) {
               position: 1,
               tasks: {
                 create: [
-                  {
-                    title: "Build Kanban board",
-                    position: 0,
-                  },
-                  {
-                    title: "Implement drag & drop",
-                    position: 1,
-                  },
-                  {
-                    title: "Connect backend",
-                    position: 2,
-                  },
+                  { title: "Build Kanban board", position: 0 },
+                  { title: "Implement drag & drop", position: 1 },
+                  { title: "Connect backend", position: 2 },
                 ],
               },
             },
@@ -60,18 +48,9 @@ export async function createWorkspace(req: Request, res: Response) {
               position: 2,
               tasks: {
                 create: [
-                  {
-                    title: "Create project",
-                    position: 0,
-                  },
-                  {
-                    title: "Install dependencies",
-                    position: 1,
-                  },
-                  {
-                    title: "Setup database",
-                    position: 2,
-                  },
+                  { title: "Create project", position: 0 },
+                  { title: "Install dependencies", position: 1 },
+                  { title: "Setup database", position: 2 },
                 ],
               },
             },
@@ -79,6 +58,18 @@ export async function createWorkspace(req: Request, res: Response) {
         },
       },
       include: {
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                email: true,
+                avatar: true,
+              },
+            },
+          },
+        },
         columns: {
           include: {
             tasks: true,
@@ -87,9 +78,14 @@ export async function createWorkspace(req: Request, res: Response) {
       },
     });
 
-    return res.status(201).json({ data: { workspace } });
+    return res.status(201).json({
+      data: {
+        workspace,
+      },
+    });
   } catch (error) {
     console.error(error);
+
     return res.status(500).json({
       message: "Failed to create workspace",
     });
@@ -102,12 +98,28 @@ export const getUserWorkspaces = async (req: Request, res: Response) => {
 
     const workspaces = await prisma.workspace.findMany({
       where: {
-        userId,
+        members: {
+          some: {
+            userId,
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
       },
       include: {
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                email: true,
+                avatar: true,
+              },
+            },
+          },
+        },
         columns: {
           orderBy: {
             position: "asc",
@@ -125,11 +137,11 @@ export const getUserWorkspaces = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       success: true,
-      data: {
-        workspaces,
-      },
+      data: { workspaces },
     });
   } catch (err) {
+    console.error(err);
+
     return res.status(500).json({
       success: false,
       message: "Failed to get workspaces",
@@ -145,9 +157,25 @@ export const getWorkspace = async (req: Request, res: Response) => {
     const workspace = await prisma.workspace.findFirst({
       where: {
         id: workspaceId,
-        userId,
+        members: {
+          some: {
+            userId,
+          },
+        },
       },
       include: {
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                email: true,
+                avatar: true,
+              },
+            },
+          },
+        },
         columns: {
           orderBy: {
             position: "asc",
@@ -286,6 +314,62 @@ export async function updateWorkspaceLayout(
 
     res.status(500).json({
       message: "Failed to update workspace layout",
+    });
+  }
+}
+
+export async function addWorkspaceMember(req: Request, res: Response) {
+  try {
+    const { workspaceId } = req.params;
+    const { email } = req.body;
+    const userId = req.userId;
+
+    const workspace = await prisma.workspace.findFirst({
+      where: {
+        id: workspaceId,
+        members: {
+          some: {
+            userId,
+            role: "OWNER",
+          },
+        },
+      },
+    });
+
+    if (!workspace) {
+      return res.status(403).json({
+        message: "Only workspace owner can add members",
+      });
+    }
+
+    const userToAdd = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    if (!userToAdd) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    const member = await prisma.workspaceMember.create({
+      data: {
+        workspaceId,
+        userId: userToAdd.id,
+        role: "MEMBER",
+      },
+    });
+
+    return res.status(201).json({
+      data: {
+        member,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to add workspace member",
     });
   }
 }
