@@ -221,3 +221,50 @@ export function useUpdateWorkspaceLayout(workspaceId: string) {
     updateWorkspaceLayoutError: mutation.error,
   }
 }
+
+export function useCreateTask(workspaceId: string) {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: async ({
+      title,
+      columnId,
+    }: {
+      title: string
+      columnId: string
+    }) => {
+      const res = await fetch("http://localhost:3000/api/tasks", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title,
+          columnId,
+        }),
+      })
+
+      const responseReady = await res.json()
+
+      if (!res.ok) {
+        throw new Error(responseReady.message)
+      }
+
+      return responseReady.data.task
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["workspace", workspaceId],
+      })
+    },
+  })
+
+  return {
+    createTask: mutation.mutate,
+    createTaskAsync: mutation.mutateAsync,
+    isCreatingTask: mutation.isPending,
+    createTaskError: mutation.error,
+  }
+}

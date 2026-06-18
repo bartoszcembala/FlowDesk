@@ -26,6 +26,7 @@ import {
 import { Input } from "@/components/ui/input"
 
 import {
+  useCreateTask,
   useCreateWorkspace,
   useDeleteTask,
   useUpdateTaskCompleted,
@@ -113,57 +114,18 @@ export default function Workspace() {
     )
   }
 
+  const { createTask: createTaskMutation } = useCreateTask(workspaceId!)
   function createTask() {
     if (!selectedColumnId || !taskTitle.trim()) return
 
-    setColumns((prev) =>
-      prev.map((column) =>
-        column.id === selectedColumnId
-          ? {
-              ...column,
-              tasks: [
-                ...column.tasks,
-                {
-                  id: crypto.randomUUID(),
-                  title: taskTitle,
-                },
-              ],
-            }
-          : column
-      )
-    )
+    createTaskMutation({
+      title: taskTitle,
+      columnId: selectedColumnId,
+    })
 
     setTaskTitle("")
     setSelectedColumnId(null)
     setIsTaskDialogOpen(false)
-  }
-
-  async function createWorkspaceFn({ title }: { title: string }) {
-    try {
-      const workspace = await createWorkspace({
-        name: title,
-      })
-      console.log(workspace)
-      setColumns(
-        workspace.columns.map((column: Column) => ({
-          id: column.id,
-          title: column.title,
-          tasks: column.tasks.map((task: Task) => ({
-            id: task.id,
-            title: task.title,
-            completed: task.completed ?? false,
-          })),
-        }))
-      )
-      setWorkspaceTitle("")
-      setIsWorkspaceDialogOpen(false)
-      navigate(`/workspace/${workspace.id}`)
-      toast.success("Workspace created successfully", {
-        position: "bottom-center",
-      })
-    } catch (err) {
-      console.error(err)
-    }
   }
 
   return (
