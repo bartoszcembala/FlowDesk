@@ -1,3 +1,4 @@
+import type { Column } from "@/types"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 interface CreateWorkspaceData {
@@ -175,5 +176,48 @@ export function useDeleteTask(workspaceId: string) {
     deleteTaskAsync: mutation.mutateAsync,
     isDeletingTask: mutation.isPending,
     deleteTaskError: mutation.error,
+  }
+}
+
+export function useUpdateWorkspaceLayout(workspaceId: string) {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: async (columns: Column[]) => {
+      const res = await fetch(
+        `http://localhost:3000/api/workspaces/${workspaceId}/layout`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            columns,
+          }),
+        }
+      )
+
+      const responseReady = await res.json()
+
+      if (!res.ok) {
+        throw new Error(responseReady.message)
+      }
+
+      return responseReady.data.workspace
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["workspace", workspaceId],
+      })
+    },
+  })
+
+  return {
+    updateWorkspaceLayout: mutation.mutate,
+    updateWorkspaceLayoutAsync: mutation.mutateAsync,
+    isUpdatingWorkspaceLayout: mutation.isPending,
+    updateWorkspaceLayoutError: mutation.error,
   }
 }

@@ -215,3 +215,77 @@ export async function updateTaskCompleted(
   }
 }
 
+export async function updateWorkspaceLayout(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  try {
+    const { workspaceId } = req.params;
+    const { columns } = req.body;
+
+    if (!Array.isArray(columns)) {
+      res.status(400).json({
+        message: "Columns must be an array",
+      });
+      return;
+    }
+
+    await prisma.$transaction(
+      columns.flatMap((column: any, columnIndex: number) => [
+        prisma.column.update({
+          where: {
+            id: column.id,
+          },
+          data: {
+            position: columnIndex,
+          },
+        }),
+
+        ...column.tasks.map((task: any, taskIndex: number) =>
+          prisma.task.update({
+            where: {
+              id: task.id,
+            },
+            data: {
+              columnId: column.id,
+              position: taskIndex,
+            },
+          }),
+        ),
+      ]),
+    );
+
+    const workspace = await prisma.workspace.findUnique({
+      where: {
+        id: workspaceId,
+      },
+      include: {
+        columns: {
+          orderBy: {
+            position: "asc",
+          },
+          include: {
+            tasks: {
+              orderBy: {
+                position: "asc",
+              },
+            },
+          },
+        },
+      },
+    });
+
+    res.status(200).json({
+      message: "Workspace layout updated",
+      data: {
+        workspace,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: "Failed to update workspace layout",
+    });
+  }
+}

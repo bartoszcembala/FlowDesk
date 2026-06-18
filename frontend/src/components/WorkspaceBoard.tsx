@@ -129,6 +129,7 @@ type WorkspaceBoardProps = {
   addTask: (columnId: string) => void
   toggleTaskCompleted: (taskId: string) => void
   deleteTask: (taskId: string) => void
+  updateWorkspaceLayout: (columns: Column[]) => void
 }
 
 export function WorkspaceBoard({
@@ -137,6 +138,7 @@ export function WorkspaceBoard({
   addTask,
   toggleTaskCompleted,
   deleteTask,
+  updateWorkspaceLayout,
 }: WorkspaceBoardProps) {
   function findColumn(taskOrColumnId: string) {
     const column = columns.find((column) => column.id === taskOrColumnId)
@@ -164,8 +166,13 @@ export function WorkspaceBoard({
 
     const overColumnIndex = columns.findIndex((column) => column.id === overId)
 
+    // Przesuwanie kolumn
     if (activeColumnIndex !== -1 && overColumnIndex !== -1) {
-      setColumns((prev) => arrayMove(prev, activeColumnIndex, overColumnIndex))
+      const newColumns = arrayMove(columns, activeColumnIndex, overColumnIndex)
+
+      setColumns(newColumns)
+      updateWorkspaceLayout(newColumns)
+
       return
     }
 
@@ -182,51 +189,58 @@ export function WorkspaceBoard({
       (task) => task.id === overId
     )
 
+    if (activeTaskIndex === -1) return
+
+    // Przesuwanie taska w tej samej kolumnie
     if (activeColumn.id === overColumn.id) {
-      setColumns((prev) =>
-        prev.map((column) =>
-          column.id === activeColumn.id
-            ? {
-                ...column,
-                tasks: arrayMove(column.tasks, activeTaskIndex, overTaskIndex),
-              }
-            : column
-        )
+      const newColumns = columns.map((column) =>
+        column.id === activeColumn.id
+          ? {
+              ...column,
+              tasks: arrayMove(column.tasks, activeTaskIndex, overTaskIndex),
+            }
+          : column
       )
+
+      setColumns(newColumns)
+      updateWorkspaceLayout(newColumns)
 
       return
     }
 
+    // Przesuwanie taska między kolumnami
     const activeTask = activeColumn.tasks[activeTaskIndex]
 
-    setColumns((prev) =>
-      prev.map((column) => {
-        if (column.id === activeColumn.id) {
-          return {
-            ...column,
-            tasks: column.tasks.filter((task) => task.id !== activeId),
-          }
+    const newColumns = columns.map((column) => {
+      if (column.id === activeColumn.id) {
+        return {
+          ...column,
+          tasks: column.tasks.filter((task) => task.id !== activeId),
+        }
+      }
+
+      if (column.id === overColumn.id) {
+        const newTasks = [...column.tasks]
+
+        if (overTaskIndex === -1) {
+          newTasks.push(activeTask)
+        } else {
+          newTasks.splice(overTaskIndex, 0, activeTask)
         }
 
-        if (column.id === overColumn.id) {
-          const newTasks = [...column.tasks]
-
-          if (overTaskIndex === -1) {
-            newTasks.push(activeTask)
-          } else {
-            newTasks.splice(overTaskIndex, 0, activeTask)
-          }
-
-          return {
-            ...column,
-            tasks: newTasks,
-          }
+        return {
+          ...column,
+          tasks: newTasks,
         }
+      }
 
-        return column
-      })
-    )
+      return column
+    })
+
+    setColumns(newColumns)
+    updateWorkspaceLayout(newColumns)
   }
+
   function addColumn() {
     const title = prompt("Column name")
     if (!title) return

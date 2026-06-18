@@ -19,6 +19,7 @@ import {
   useCreateWorkspace,
   useDeleteTask,
   useUpdateTaskCompleted,
+  useUpdateWorkspaceLayout,
   useWorkspace,
   useWorkspaces,
 } from "@/lib/queries/workspaceQueries"
@@ -37,6 +38,7 @@ export default function Workspace() {
   const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null)
   const [taskTitle, setTaskTitle] = useState("")
   const { updateTaskCompleted } = useUpdateTaskCompleted(workspaceId!)
+  const { updateWorkspaceLayout } = useUpdateWorkspaceLayout(workspaceId!)
 
   useEffect(() => {
     if (!workspace) return
@@ -54,7 +56,7 @@ export default function Workspace() {
       }))
     )
   }, [workspace, workspaceId])
-  console.log("col", columns)
+
   function openAddTaskDialog(columnId: string) {
     setSelectedColumnId(columnId)
     setIsTaskDialogOpen(true)
@@ -183,6 +185,7 @@ export default function Workspace() {
         addTask={openAddTaskDialog}
         toggleTaskCompleted={toggleTaskCompleted}
         deleteTask={removeTask}
+        updateWorkspaceLayout={updateWorkspaceLayout}
       />
 
       <button
