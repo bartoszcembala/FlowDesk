@@ -14,7 +14,13 @@ export function useLogin() {
       })
 
       const responseReady = await res.json()
+
+      if (!res.ok) {
+        throw new Error(responseReady.message || "Login failed")
+      }
+
       queryClient.setQueryData(["user"], responseReady.data.user)
+
       return responseReady.data.user as User
     },
   })
@@ -22,6 +28,7 @@ export function useLogin() {
   return {
     login: mutation.mutateAsync,
     isLogging: mutation.isPending,
+    loginError: mutation.error,
   }
 }
 
@@ -34,7 +41,13 @@ export function useSignUp() {
         credentials: "include",
         body: JSON.stringify(userInformations),
       })
+
       const responseReady = await res.json()
+
+      if (!res.ok) {
+        throw new Error(responseReady.message || "Signup failed")
+      }
+
       return responseReady.data.user as User
     },
   })
@@ -42,6 +55,7 @@ export function useSignUp() {
   return {
     signUp: mutation.mutateAsync,
     isSigningUp: mutation.isPending,
+    signUpError: mutation.error,
   }
 }
 

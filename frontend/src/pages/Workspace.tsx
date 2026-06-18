@@ -95,6 +95,12 @@ export default function Workspace() {
     deleteTask(taskId)
   }
 
+  function createWorkspaceFn() {
+    createWorkspace({ name: workspaceTitle })
+    setWorkspaceTitle("")
+    setIsWorkspaceDialogOpen(false)
+  }
+
   function toggleTaskCompleted(taskId: string) {
     updateTaskCompleted({
       taskId,
@@ -135,7 +141,7 @@ export default function Workspace() {
         <Collapsible
           open={isOpen}
           onOpenChange={setIsOpen}
-          className="flex w-87.5 flex-col gap-2"
+          className="flex w-87.5 flex-col gap-2 rounded-sm bg-neutral-900"
         >
           <div className="flex items-center justify-between gap-4 rounded-sm bg-neutral-900 px-4 py-1">
             <h4 className="text-xl font-semibold tracking-wide">
@@ -155,12 +161,12 @@ export default function Workspace() {
             </CollapsibleTrigger>
           </div>
 
-          <CollapsibleContent className="flex flex-col gap-2">
+          <CollapsibleContent className="mb-3 flex flex-col gap-2">
             {workspaces?.map((workspace: Workspace) => (
               <Link
                 onClick={() => setIsOpen(false)}
                 key={workspace.id}
-                className="cursor-pointer rounded-md border px-4 py-2 text-sm font-medium"
+                className="mx-2 cursor-pointer rounded-md border px-4 py-2 text-sm font-medium"
                 to={`/workspace/${workspace.id}`}
               >
                 {workspace.name}
@@ -170,7 +176,7 @@ export default function Workspace() {
         </Collapsible>
         <button
           onClick={openAddWorkspaceDialog}
-          className="cursor-pointer rounded-lg border px-4 py-2"
+          className="h-10 cursor-pointer rounded-lg border px-4 py-2"
         >
           Create Workspace
         </button>
@@ -310,7 +316,9 @@ export default function Workspace() {
             placeholder="Task title..."
           />
 
-          <Button onClick={createTask}>Create</Button>
+          <Button className="cursor-pointer" onClick={createTask}>
+            Create
+          </Button>
         </DialogContent>
       </Dialog>
 
@@ -329,7 +337,7 @@ export default function Workspace() {
             placeholder="Workspace title..."
           />
 
-          <Button onClick={() => createWorkspaceFn({ title: workspaceTitle })}>
+          <Button onClick={createWorkspaceFn} className="cursor-pointer">
             Create
           </Button>
         </DialogContent>
