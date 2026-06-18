@@ -86,7 +86,7 @@ function SortableColumn({
         transform: CSS.Transform.toString(transform),
         transition,
       }}
-      className="w-80 rounded-xl border p-4"
+      className="w-90 rounded-xl border p-4"
     >
       <div
         className="mb-4 flex cursor-grab items-center gap-2 text-2xl font-bold"

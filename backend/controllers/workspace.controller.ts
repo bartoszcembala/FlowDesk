@@ -16,7 +16,7 @@ export async function createWorkspace(req: Request, res: Response) {
         columns: {
           create: [
             {
-              title: "To Do",
+              title: "Backend",
               position: 0,
               tasks: {
                 create: [
@@ -36,7 +36,7 @@ export async function createWorkspace(req: Request, res: Response) {
               },
             },
             {
-              title: "Doing",
+              title: "Frontend",
               position: 1,
               tasks: {
                 create: [
@@ -56,7 +56,7 @@ export async function createWorkspace(req: Request, res: Response) {
               },
             },
             {
-              title: "Done",
+              title: "Deployment",
               position: 2,
               tasks: {
                 create: [
