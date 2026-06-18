@@ -78,7 +78,7 @@ export function NavigationBar() {
                 >
                   <Link
                     className="text-neutral-200"
-                    to={`/workspace/${workspaces[0]?.id}`}
+                    to={`/workspace/${workspaces && workspaces[0]?.id}`}
                   >
                     Workspace
                   </Link>

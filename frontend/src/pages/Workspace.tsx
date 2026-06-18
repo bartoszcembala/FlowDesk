@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input"
 
 import {
   useCreateWorkspace,
+  useDeleteTask,
   useUpdateTaskCompleted,
   useWorkspace,
   useWorkspaces,
@@ -57,6 +58,18 @@ export default function Workspace() {
   function openAddTaskDialog(columnId: string) {
     setSelectedColumnId(columnId)
     setIsTaskDialogOpen(true)
+  }
+
+  const { deleteTask } = useDeleteTask(workspaceId!)
+  function removeTask(taskId: string) {
+    setColumns((prev) =>
+      prev.map((column) => ({
+        ...column,
+        tasks: column.tasks.filter((task) => task.id !== taskId),
+      }))
+    )
+
+    deleteTask(taskId)
   }
 
   function toggleTaskCompleted(taskId: string) {
@@ -169,6 +182,7 @@ export default function Workspace() {
         setColumns={setColumns}
         addTask={openAddTaskDialog}
         toggleTaskCompleted={toggleTaskCompleted}
+        deleteTask={removeTask}
       />
 
       <button

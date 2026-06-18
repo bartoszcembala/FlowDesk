@@ -12,13 +12,16 @@ import { Checkbox } from "./ui/checkbox"
 import { HiOutlineBars3 } from "react-icons/hi2"
 import { MdDragIndicator } from "react-icons/md"
 import { HiArrowTopRightOnSquare } from "react-icons/hi2"
+import { Trash2 } from "lucide-react"
 
 function SortableTask({
   task,
   toggleTaskCompleted,
+  deleteTask,
 }: {
   task: Task
   toggleTaskCompleted: (taskId: string) => void
+  deleteTask: (taskId: string) => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: task.id })
@@ -50,6 +53,14 @@ function SortableTask({
       >
         {task.title}
       </div>
+      <button
+        type="button"
+        onClick={() => deleteTask(task.id)}
+        onPointerDown={(e) => e.stopPropagation()}
+        className="cursor-pointer rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-red-500"
+      >
+        <Trash2 size={16} />
+      </button>
     </div>
   )
 }
@@ -58,10 +69,12 @@ function SortableColumn({
   column,
   addTask,
   toggleTaskCompleted,
+  deleteTask,
 }: {
   column: Column
   addTask: (columnId: string) => void
   toggleTaskCompleted: (taskId: string) => void
+  deleteTask: (taskId: string) => void
 }) {
   const { setNodeRef, attributes, listeners, transform, transition } =
     useSortable({ id: column.id })
@@ -94,6 +107,7 @@ function SortableColumn({
               key={task.id}
               task={task}
               toggleTaskCompleted={toggleTaskCompleted}
+              deleteTask={deleteTask}
             />
           ))}
         </div>
@@ -114,6 +128,7 @@ type WorkspaceBoardProps = {
   setColumns: React.Dispatch<React.SetStateAction<Column[]>>
   addTask: (columnId: string) => void
   toggleTaskCompleted: (taskId: string) => void
+  deleteTask: (taskId: string) => void
 }
 
 export function WorkspaceBoard({
@@ -121,6 +136,7 @@ export function WorkspaceBoard({
   setColumns,
   addTask,
   toggleTaskCompleted,
+  deleteTask,
 }: WorkspaceBoardProps) {
   function findColumn(taskOrColumnId: string) {
     const column = columns.find((column) => column.id === taskOrColumnId)
@@ -238,6 +254,7 @@ export function WorkspaceBoard({
                 column={column}
                 addTask={addTask}
                 toggleTaskCompleted={toggleTaskCompleted}
+                deleteTask={deleteTask}
               />
             ))}
           </div>
@@ -245,10 +262,10 @@ export function WorkspaceBoard({
       </DndContext>
       <button
         onClick={addColumn}
-        className="mt-6 h-12 cursor-pointer rounded-lg border px-6 tracking-wide flex items-center  gap-2"
+        className="mt-6 flex h-12 cursor-pointer items-center gap-2 rounded-lg border px-6 tracking-wide"
       >
         Add Column
-        <HiArrowTopRightOnSquare className="w-5 h-5"/>
+        <HiArrowTopRightOnSquare className="h-5 w-5" />
       </button>
     </div>
   )

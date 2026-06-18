@@ -143,3 +143,37 @@ export function useUpdateTaskCompleted(workspaceId: string) {
     resetUpdateTaskCompleted: mutation.reset,
   }
 }
+
+export function useDeleteTask(workspaceId: string) {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: async (taskId: string) => {
+      const res = await fetch(`http://localhost:3000/api/tasks/${taskId}`, {
+        method: "DELETE",
+        credentials: "include",
+      })
+
+      const responseReady = await res.json()
+
+      if (!res.ok) {
+        throw new Error(responseReady.message)
+      }
+
+      return responseReady.data.task
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["workspace", workspaceId],
+      })
+    },
+  })
+
+  return {
+    deleteTask: mutation.mutate,
+    deleteTaskAsync: mutation.mutateAsync,
+    isDeletingTask: mutation.isPending,
+    deleteTaskError: mutation.error,
+  }
+}

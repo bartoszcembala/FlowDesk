@@ -4,7 +4,6 @@ import { Request, Response } from "express";
 const prisma = new PrismaClient();
 
 export async function createWorkspace(req: Request, res: Response) {
-  console.log(req.body);
   const { name } = req.body;
   const userId = req.userId;
 
@@ -215,3 +214,4 @@ export async function updateTaskCompleted(
     });
   }
 }
+
