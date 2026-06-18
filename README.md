@@ -3,9 +3,9 @@
 Full-stack real-time project management application inspired by Trello and Jira.
 
 <p align="center">
-  <img src=".//assets/image1.png" width="30%" />
+  <img src=".//assets/image1.png" width="39%" />
   &nbsp;&nbsp;
-  <img src=".//assets/image2.png" width="65%" />
+  <img src=".//assets/image2.png" width="59%" />
 </p>
 
 ---
