@@ -1,16 +1,8 @@
 import { useEffect, useState } from "react"
 import { ChevronsUpDown } from "lucide-react"
 import { LuCircleMinus } from "react-icons/lu"
-import { Send } from "lucide-react"
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { useAddWorkspaceMember } from "@/lib/queries/workspaceQueries"
+import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
   Collapsible,
@@ -40,6 +32,7 @@ import type { Column, Task, Workspace } from "@/types"
 
 import { WorkspaceChat } from "@/components/WorkspaceChat"
 import { useCurrentUser } from "@/lib/queries/userQueries"
+import { toast } from "sonner"
 
 export default function Workspace() {
   const { data: user } = useCurrentUser()
@@ -58,7 +51,27 @@ export default function Workspace() {
   const { updateWorkspaceLayout } = useUpdateWorkspaceLayout(workspaceId!)
   const { deleteTask } = useDeleteTask(workspaceId!)
   const [isChatOpen, setIsChatOpen] = useState(true)
-  console.log(workspace)
+  const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = useState(false)
+  const [memberEmail, setMemberEmail] = useState("")
+  const { addWorkspaceMember } = useAddWorkspaceMember(workspaceId!)
+
+  function addMember() {
+    if (!memberEmail.trim()) return
+
+    addWorkspaceMember(
+      { email: memberEmail },
+      {
+        onSuccess: () => {
+          setMemberEmail("")
+          setIsAddMemberDialogOpen(false)
+          toast.success("Member added")
+        },
+        onError: (error) => {
+          toast.error(error.message)
+        },
+      }
+    )
+  }
   useEffect(() => {
     if (!workspace) return
 
@@ -134,7 +147,7 @@ export default function Workspace() {
     setSelectedColumnId(null)
     setIsTaskDialogOpen(false)
   }
-
+  
   return (
     <div className="relative mx-12">
       {/* Workspace dropdown */}
@@ -182,10 +195,12 @@ export default function Workspace() {
           Create Workspace
         </button>
       </div>
-      <div className="absolute top-6 left-200 flex">
-        {workspace?.members &&
-          workspace.members.map((member) => <span>{member.id}</span>)}
-      </div>
+      <button
+        onClick={() => setIsAddMemberDialogOpen(true)}
+        className="h-10 cursor-pointer rounded-lg border px-4 py-2"
+      >
+        Add Member
+      </button>
       {/* Chat */}
       <div className="fixed top-20 right-5 z-20">
         <Collapsible open={isChatOpen} onOpenChange={setIsChatOpen}>
@@ -263,6 +278,27 @@ export default function Workspace() {
 
           <Button onClick={createWorkspaceFn} className="cursor-pointer">
             Create
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isAddMemberDialogOpen}
+        onOpenChange={setIsAddMemberDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Member</DialogTitle>
+          </DialogHeader>
+
+          <Input
+            value={memberEmail}
+            onChange={(e) => setMemberEmail(e.target.value)}
+            placeholder="User email..."
+          />
+
+          <Button onClick={addMember} className="cursor-pointer">
+            Add
           </Button>
         </DialogContent>
       </Dialog>

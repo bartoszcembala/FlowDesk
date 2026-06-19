@@ -324,19 +324,23 @@ export async function addWorkspaceMember(req: Request, res: Response) {
     const { email } = req.body;
     const userId = req.userId;
 
-    const workspace = await prisma.workspace.findFirst({
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    if (!email?.trim()) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const ownerMembership = await prisma.workspaceMember.findFirst({
       where: {
-        id: workspaceId,
-        members: {
-          some: {
-            userId,
-            role: "OWNER",
-          },
-        },
+        workspaceId,
+        userId,
+        role: "OWNER",
       },
     });
 
-    if (!workspace) {
+    if (!ownerMembership) {
       return res.status(403).json({
         message: "Only workspace owner can add members",
       });
@@ -354,11 +358,36 @@ export async function addWorkspaceMember(req: Request, res: Response) {
       });
     }
 
+    const existingMember = await prisma.workspaceMember.findUnique({
+      where: {
+        userId_workspaceId: {
+          userId: userToAdd.id,
+          workspaceId,
+        },
+      },
+    });
+
+    if (existingMember) {
+      return res.status(409).json({
+        message: "User is already a member",
+      });
+    }
+
     const member = await prisma.workspaceMember.create({
       data: {
-        workspaceId,
         userId: userToAdd.id,
+        workspaceId,
         role: "MEMBER",
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            avatar: true,
+          },
+        },
       },
     });
 
@@ -368,8 +397,10 @@ export async function addWorkspaceMember(req: Request, res: Response) {
       },
     });
   } catch (error) {
+    console.error(error);
+
     return res.status(500).json({
-      message: "Failed to add workspace member",
+      message: "Failed to add member",
     });
   }
 }

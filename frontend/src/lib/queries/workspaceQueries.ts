@@ -302,3 +302,44 @@ export function useWorkspaceMessages(workspaceId: string) {
     isLoadingMessages: query.isPending,
   }
 }
+
+export function useAddWorkspaceMember(workspaceId: string) {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: async ({ email }: { email: string }) => {
+      const res = await fetch(
+        `http://localhost:3000/api/workspaces/${workspaceId}/members`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        }
+      )
+
+      const responseReady = await res.json()
+
+      if (!res.ok) {
+        throw new Error(responseReady.message || "Failed to add member")
+      }
+
+      return responseReady.data.member
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["workspace", workspaceId],
+      })
+    },
+  })
+
+  return {
+    addWorkspaceMember: mutation.mutate,
+    addWorkspaceMemberAsync: mutation.mutateAsync,
+    isAddingWorkspaceMember: mutation.isPending,
+    addWorkspaceMemberError: mutation.error,
+  }
+}
