@@ -73,6 +73,7 @@ export function useCurrentUser() {
       }
 
       const data = await res.json()
+      console.log("data", data)
       return data.data.user as User
     },
   })

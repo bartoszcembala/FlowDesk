@@ -21,10 +21,12 @@ model User {
   avatar    String?
 
   workspaceMemberships WorkspaceMember[]
+  messages Message[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
 
 
 model Workspace {
@@ -33,16 +35,17 @@ model Workspace {
 
   members   WorkspaceMember[]
   columns   Column[]
+  messages  Message[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model WorkspaceMember {
-  id          String   @id @default(cuid())
+  id          String @id @default(cuid())
 
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -92,4 +95,20 @@ model Task {
   updatedAt   DateTime    @updatedAt
 
   @@index([columnId])
+}
+
+model Message {
+  id          String    @id @default(cuid())
+  content     String
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+
+  @@index([workspaceId])
+  @@index([userId])
 }

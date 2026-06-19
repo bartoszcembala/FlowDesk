@@ -373,3 +373,54 @@ export async function addWorkspaceMember(req: Request, res: Response) {
     });
   }
 }
+
+export async function getWorkspaceMessages(req: Request, res: Response) {
+  try {
+    const { workspaceId } = req.params;
+    const userId = req.userId;
+
+    const membership = await prisma.workspaceMember.findFirst({
+      where: {
+        workspaceId,
+        userId,
+      },
+    });
+
+    if (!membership) {
+      return res.status(403).json({
+        message: "No access to this workspace",
+      });
+    }
+
+    const messages = await prisma.message.findMany({
+      where: {
+        workspaceId,
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+
+    return res.status(200).json({
+      data: {
+        messages,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Failed to get messages",
+    });
+  }
+}

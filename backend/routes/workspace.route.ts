@@ -6,6 +6,7 @@ import {
   updateTaskCompleted,
   updateWorkspaceLayout,
   addWorkspaceMember,
+  getWorkspaceMessages,
 } from "../controllers/workspace.controller";
 import { protect } from "../middleware/protect";
 
@@ -17,5 +18,6 @@ router.get("/get-workspaces", protect, getUserWorkspaces);
 router.get("/:workspaceId", protect, getWorkspace);
 router.patch("/:taskId/completed", protect, updateTaskCompleted);
 router.patch("/:workspaceId/layout", protect, updateWorkspaceLayout);
+router.get("/:workspaceId/messages", protect, getWorkspaceMessages);
 
 export default router;

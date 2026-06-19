@@ -35,12 +35,14 @@ import {
   useWorkspaces,
 } from "@/lib/queries/workspaceQueries"
 import { WorkspaceBoard } from "@/components/WorkspaceBoard"
-import { Link, useNavigate, useParams } from "react-router-dom"
+import { Link, useParams } from "react-router-dom"
 import type { Column, Task, Workspace } from "@/types"
-import { toast } from "sonner"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+
+import { WorkspaceChat } from "@/components/WorkspaceChat"
+import { useCurrentUser } from "@/lib/queries/userQueries"
 
 export default function Workspace() {
+  const { data: user } = useCurrentUser()
   const { workspaceId } = useParams()
   const { workspaces } = useWorkspaces()
   const { createWorkspace } = useCreateWorkspace()
@@ -203,93 +205,12 @@ export default function Workspace() {
             </CardHeader>
 
             <CollapsibleContent>
-              <div className="flex h-170 flex-col">
-                <CardContent className="flex-1 space-y-4 overflow-y-auto p-4">
-                  <div className="flex gap-3">
-                    <Avatar>
-                      <AvatarFallback>A</AvatarFallback>
-                    </Avatar>
-
-                    <div className="max-w-[70%] rounded-lg bg-muted px-4 py-2">
-                      Hey team, how is the e-commerce project going?
-                    </div>
-                  </div>
-                  <div className="flex justify-end">
-                    <div className="max-w-[70%] rounded-lg bg-primary px-4 py-2 text-primary-foreground">
-                      Backend authentication is finished. Users can now register
-                      and log in.
-                    </div>
-                  </div>
-                  <div className="flex gap-3">
-                    <Avatar>
-                      <AvatarFallback>S</AvatarFallback>
-                    </Avatar>
-
-                    <div className="max-w-[70%] rounded-lg bg-muted px-4 py-2">
-                      Nice! I'm currently working on the product listing page.
-                    </div>
-                  </div>
-                  <div className="flex gap-3">
-                    <Avatar>
-                      <AvatarFallback>A</AvatarFallback>
-                    </Avatar>
-
-                    <div className="max-w-[70%] rounded-lg bg-muted px-4 py-2">
-                      Great. Have we connected the frontend to the API yet?
-                    </div>
-                  </div>
-                  <div className="flex gap-3">
-                    <Avatar>
-                      <AvatarFallback>S</AvatarFallback>
-                    </Avatar>
-
-                    <div className="max-w-[70%] rounded-lg bg-muted px-4 py-2">
-                      Not yet, but React Query integration is next on my list.
-                    </div>
-                  </div>
-                  <div className="flex justify-end">
-                    <div className="max-w-[70%] rounded-lg bg-primary px-4 py-2 text-primary-foreground">
-                      Product and cart endpoints are already available for
-                      testing.
-                    </div>
-                  </div>
-                  <div className="flex gap-3">
-                    <Avatar>
-                      <AvatarFallback>A</AvatarFallback>
-                    </Avatar>
-
-                    <div className="max-w-[70%] rounded-lg bg-muted px-4 py-2">
-                      Perfect. What about Stripe payments?
-                    </div>
-                  </div>{" "}
-                  <div className="flex justify-end">
-                    <div className="max-w-[70%] rounded-lg bg-primary px-4 py-2 text-primary-foreground">
-                      Basic Stripe integration is done. I still need to handle
-                      webhooks.
-                    </div>
-                  </div>{" "}
-                  {/* <div className="flex gap-3">
-                    <Avatar>
-                      <AvatarFallback>A</AvatarFallback>
-                    </Avatar>
-
-                    <div className="max-w-[70%] rounded-lg bg-muted px-4 py-2">
-                      Once the checkout UI is finished, I'll connect it to
-                      Stripe.
-                    </div>
-                  </div>{" "} */}
-                </CardContent>
-
-                <CardFooter className="border-t p-4">
-                  <div className="flex w-full gap-3">
-                    <Input placeholder="Type here..." />
-
-                    <Button className="cursor-pointer">
-                      <Send />
-                    </Button>
-                  </div>
-                </CardFooter>
-              </div>
+              {workspaceId && (
+                <WorkspaceChat
+                  workspaceId={workspaceId}
+                  currentUserId={user?.id ?? ""}
+                />
+              )}
             </CollapsibleContent>
           </Card>
         </Collapsible>

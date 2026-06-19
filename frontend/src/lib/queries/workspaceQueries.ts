@@ -272,3 +272,33 @@ export function useCreateTask(workspaceId: string) {
     createTaskError: mutation.error,
   }
 }
+
+export function useWorkspaceMessages(workspaceId: string) {
+  const query = useQuery({
+    queryKey: ["workspace-messages", workspaceId],
+
+    queryFn: async () => {
+      const res = await fetch(
+        `http://localhost:3000/api/workspaces/${workspaceId}/messages`,
+        {
+          credentials: "include",
+        }
+      )
+
+      const responseReady = await res.json()
+
+      if (!res.ok) {
+        throw new Error(responseReady.message || "Failed to get messages")
+      }
+
+      return responseReady.data.messages
+    },
+
+    enabled: !!workspaceId,
+  })
+
+  return {
+    messages: query.data,
+    isLoadingMessages: query.isPending,
+  }
+}
