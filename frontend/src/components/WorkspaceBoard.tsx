@@ -130,11 +130,12 @@ type WorkspaceBoardProps = {
   toggleTaskCompleted: (taskId: string) => void
   deleteTask: (taskId: string) => void
   updateWorkspaceLayout: (columns: Column[]) => void
+  addColumn: () => void
 }
 
 export function WorkspaceBoard({
   columns,
-  setColumns,
+  addColumn,
   addTask,
   toggleTaskCompleted,
   deleteTask,
@@ -241,19 +242,6 @@ export function WorkspaceBoard({
     updateWorkspaceLayout(newColumns)
   }
 
-  function addColumn() {
-    const title = prompt("Column name")
-    if (!title) return
-
-    setColumns((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        title,
-        tasks: [],
-      },
-    ])
-  }
   return (
     <div className="flex gap-6">
       <DndContext collisionDetection={closestCorners} onDragEnd={handleDragEnd}>

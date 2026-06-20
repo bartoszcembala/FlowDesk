@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react"
 import { ChevronsUpDown } from "lucide-react"
 import { LuCircleMinus } from "react-icons/lu"
-import { useAddWorkspaceMember } from "@/lib/queries/workspaceQueries"
+import {
+  useAddWorkspaceMember,
+  useCreateColumn,
+  useWorkspaceMessages,
+} from "@/lib/queries/workspaceQueries"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -32,6 +36,7 @@ import type { Column, Task, Workspace } from "@/types"
 
 import { WorkspaceChat } from "@/components/WorkspaceChat"
 import { useCurrentUser } from "@/lib/queries/userQueries"
+
 import { toast } from "sonner"
 
 export default function Workspace() {
@@ -42,6 +47,7 @@ export default function Workspace() {
   const { workspace } = useWorkspace(workspaceId!)
   const [columns, setColumns] = useState<Column[]>([])
   const [isOpen, setIsOpen] = useState(false)
+  const [isMembersOpen, setIsMembersOpen] = useState(false)
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false)
   const [isWorkspaceDialogOpen, setIsWorkspaceDialogOpen] = useState(false)
   const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null)
@@ -54,6 +60,14 @@ export default function Workspace() {
   const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = useState(false)
   const [memberEmail, setMemberEmail] = useState("")
   const { addWorkspaceMember } = useAddWorkspaceMember(workspaceId!)
+  const { createColumn } = useCreateColumn(workspaceId!)
+
+  function addColumn() {
+    const title = prompt("Column name")
+    if (!title?.trim()) return
+
+    createColumn({ title })
+  }
 
   function addMember() {
     if (!memberEmail.trim()) return
@@ -72,6 +86,7 @@ export default function Workspace() {
       }
     )
   }
+
   useEffect(() => {
     if (!workspace) return
 
@@ -147,7 +162,7 @@ export default function Workspace() {
     setSelectedColumnId(null)
     setIsTaskDialogOpen(false)
   }
-  
+
   return (
     <div className="relative mx-12">
       {/* Workspace dropdown */}
@@ -195,17 +210,51 @@ export default function Workspace() {
           Create Workspace
         </button>
       </div>
-      <button
-        onClick={() => setIsAddMemberDialogOpen(true)}
-        className="h-10 cursor-pointer rounded-lg border px-4 py-2"
-      >
-        Add Member
-      </button>
+
+      <div className="fixed top-20 right-120 z-20">
+        <Collapsible open={isMembersOpen} onOpenChange={setIsMembersOpen}>
+          <Card className="w-80 overflow-hidden pt-0">
+            <CardHeader className="flex h-10 items-center justify-between border-b py-4">
+              <CardTitle>Members</CardTitle>
+
+              <CollapsibleTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 cursor-pointer"
+                >
+                  <LuCircleMinus className="h-5 w-5" />
+                </Button>
+              </CollapsibleTrigger>
+            </CardHeader>
+
+            <CollapsibleContent className="px-3">
+              {workspace &&
+                workspace?.members.map((member) => (
+                  <div
+                    className="my-2 flex gap-2 rounded-sm border px-6 py-2"
+                    key={member.id}
+                  >
+                    <div className="h-5 w-5 rounded-full bg-neutral-500"></div>
+                    <h3>{member.user.username}</h3>
+                    <p>{member.role}</p>
+                  </div>
+                ))}
+              <button
+                onClick={() => setIsAddMemberDialogOpen(true)}
+                className="h-10 w-full cursor-pointer rounded-lg border px-4 py-2"
+              >
+                Add Member
+              </button>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
+      </div>
       {/* Chat */}
       <div className="fixed top-20 right-5 z-20">
         <Collapsible open={isChatOpen} onOpenChange={setIsChatOpen}>
           <Card className="w-100 overflow-hidden pt-0">
-            <CardHeader className="flex h-10 items-center justify-between border-b bg-neutral-800 py-4">
+            <CardHeader className="flex h-10 items-center justify-between border-b py-4">
               <CardTitle>Chat</CardTitle>
 
               <CollapsibleTrigger asChild>
@@ -234,8 +283,8 @@ export default function Workspace() {
       {/* Board */}
       <div className="flex pt-20">
         <WorkspaceBoard
-          columns={columns}
-          setColumns={setColumns}
+          columns={workspace?.columns ?? []}
+          addColumn={addColumn}
           addTask={openAddTaskDialog}
           toggleTaskCompleted={toggleTaskCompleted}
           deleteTask={removeTask}

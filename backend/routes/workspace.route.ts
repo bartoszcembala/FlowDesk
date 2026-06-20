@@ -7,6 +7,7 @@ import {
   updateWorkspaceLayout,
   addWorkspaceMember,
   getWorkspaceMessages,
+  createColumn,
 } from "../controllers/workspace.controller";
 import { protect } from "../middleware/protect";
 
@@ -19,5 +20,6 @@ router.get("/:workspaceId", protect, getWorkspace);
 router.patch("/:taskId/completed", protect, updateTaskCompleted);
 router.patch("/:workspaceId/layout", protect, updateWorkspaceLayout);
 router.get("/:workspaceId/messages", protect, getWorkspaceMessages);
+router.post("/:workspaceId/columns", protect, createColumn);
 
 export default router;

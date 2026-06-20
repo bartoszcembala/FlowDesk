@@ -455,3 +455,54 @@ export async function getWorkspaceMessages(req: Request, res: Response) {
     });
   }
 }
+
+export async function createColumn(req: Request, res: Response) {
+  try {
+    const { workspaceId } = req.params;
+    const { title } = req.body;
+    const userId = req.userId;
+
+    if (!title?.trim()) {
+      return res.status(400).json({ message: "Column title is required" });
+    }
+
+    const membership = await prisma.workspaceMember.findFirst({
+      where: {
+        workspaceId,
+        userId,
+      },
+    });
+
+    if (!membership) {
+      return res.status(403).json({ message: "No access to this workspace" });
+    }
+
+    const lastColumn = await prisma.column.findFirst({
+      where: { workspaceId },
+      orderBy: { position: "desc" },
+    });
+
+    const column = await prisma.column.create({
+      data: {
+        title,
+        workspaceId,
+        position: lastColumn ? lastColumn.position + 1 : 0,
+      },
+      include: {
+        tasks: true,
+      },
+    });
+
+    return res.status(201).json({
+      data: {
+        column,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Failed to create column",
+    });
+  }
+}

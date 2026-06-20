@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { io, type Socket } from "socket.io-client"
 import { Send } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -29,6 +29,13 @@ export function WorkspaceChat({
   const [localMessages, setLocalMessages] = useState<ChatMessage[]>([])
   const [content, setContent] = useState("")
   const [socket, setSocket] = useState<Socket | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    })
+  }, [localMessages])
 
   useEffect(() => {
     if (!messages) return
@@ -46,7 +53,6 @@ export function WorkspaceChat({
     setSocket(newSocket)
 
     newSocket.on("connect", () => {
-      console.log("SOCKET CONNECTED:", newSocket.id)
       newSocket.emit("workspace:join", { workspaceId })
     })
 
@@ -55,8 +61,6 @@ export function WorkspaceChat({
     })
 
     newSocket.on("message:new", (message: ChatMessage) => {
-      console.log("NEW MESSAGE FROM SOCKET:", message)
-
       setLocalMessages((prev) => {
         const alreadyExists = prev.some((msg) => msg.id === message.id)
         if (alreadyExists) return prev
@@ -98,7 +102,7 @@ export function WorkspaceChat({
 
   return (
     <div className="flex h-170 flex-col">
-      <div className="flex-1 space-y-4 overflow-y-auto p-4">
+      <div className="chat-scrollbar flex-1 space-y-2 overflow-y-auto p-4">
         <div className={`flex justify-start gap-2`}>
           <Avatar className="h-8 w-8">
             <AvatarFallback>B</AvatarFallback>
@@ -115,6 +119,7 @@ export function WorkspaceChat({
           const isMine = message.user.id === currentUserId
           return (
             <div
+              ref={messagesEndRef}
               key={message.id}
               className={`flex gap-2 ${
                 isMine ? "justify-end" : "justify-start"

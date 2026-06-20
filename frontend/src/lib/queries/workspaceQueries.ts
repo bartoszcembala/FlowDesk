@@ -343,3 +343,44 @@ export function useAddWorkspaceMember(workspaceId: string) {
     addWorkspaceMemberError: mutation.error,
   }
 }
+
+export function useCreateColumn(workspaceId: string) {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: async ({ title }: { title: string }) => {
+      const res = await fetch(
+        `http://localhost:3000/api/workspaces/${workspaceId}/columns`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ title }),
+        }
+      )
+
+      const responseReady = await res.json()
+
+      if (!res.ok) {
+        throw new Error(responseReady.message || "Failed to create column")
+      }
+
+      return responseReady.data.column
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["workspace", workspaceId],
+      })
+    },
+  })
+
+  return {
+    createColumn: mutation.mutate,
+    createColumnAsync: mutation.mutateAsync,
+    isCreatingColumn: mutation.isPending,
+    createColumnError: mutation.error,
+  }
+}
