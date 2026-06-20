@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 
 const prisma = new PrismaClient();
 
@@ -63,67 +63,39 @@ export async function signup(req: Request, res: Response, next: any) {
   }
 }
 
-export async function login(req: Request, res: Response, next: any) {
+export const login = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
-    const { email, password: inputPassword } = req.body;
+    const { email, password } = req.body;
 
-    if (!email || !inputPassword) {
-      return res.status(400).json({
-        success: false,
-        error: "Email and password are required",
-      });
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Email and password are required" });
     }
 
     const user = await prisma.user.findUnique({
       where: { email },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        password: true,
-      },
     });
 
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid credentials.",
-      });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const isPasswordCorrect = await bcrypt.compare(
-      inputPassword,
-      user.password,
-    );
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
-    if (!isPasswordCorrect) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid credentials.",
-      });
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const token = signToken(user.id);
-
-    sendToken(res, token);
-
-    const { password, ...safeUser } = user;
-
-    res.status(200).json({
-      success: true,
-      data: {
-        user: safeUser,
-      },
-    });
+    return res.status(200).json({ message: "Logged in" });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : "Internal server error",
-    });
+    next(error);
   }
-}
+};
 
 export async function logout(req: Request, res: Response) {
   try {

@@ -28,9 +28,12 @@ export function NavigationBar() {
     toast.success("Logged out successfully", { position: "bottom-center" })
     queryClient.setQueryData(["user"], null)
     queryClient.invalidateQueries({ queryKey: ["user"] })
+
+    queryClient.setQueryData(["workspaces"], null)
+    queryClient.invalidateQueries({ queryKey: ["workspaces"] })
   }
   return (
-    <NavigationMenu className="min-w-full border-b">
+    <NavigationMenu className="fixed top-0 min-w-full border-b">
       <NavigationMenuList className="min-w-[99vw] px-3 py-2">
         <div className="flex h-10 min-w-full items-center justify-between">
           <Link to="/landing" className="flex">

@@ -9,13 +9,9 @@ import http from "http";
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
 import cookie from "cookie";
+import app from "./app";
 
 const prisma = new PrismaClient();
-const app = express();
-
-app.use(express.json());
-app.use(cookieParser());
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 
 const server = http.createServer(app);
 
@@ -120,10 +116,6 @@ io.on("connection", (socket) => {
     io.to(`workspace:${workspaceId}`).emit("message:new", message);
   });
 });
-
-app.use("/api/users", userRoutes);
-app.use("/api/workspaces", workspaceRoutes);
-app.use("/api/tasks", taskRoutes);
 
 server.listen(3000, () => {
   console.log("Server is running on port 3000");

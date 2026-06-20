@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react"
 import type { Column, Task } from "@/types"
+
 import { DndContext, closestCorners, type DragEndEvent } from "@dnd-kit/core"
 import {
   SortableContext,
@@ -8,21 +10,24 @@ import {
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { Checkbox } from "./ui/checkbox"
-import { HiOutlineBars3 } from "react-icons/hi2"
-import { MdDragIndicator } from "react-icons/md"
-import { HiArrowTopRightOnSquare } from "react-icons/hi2"
+
 import { Trash2 } from "lucide-react"
+import { HiOutlineBars3, HiArrowTopRightOnSquare } from "react-icons/hi2"
+import { MdDragIndicator } from "react-icons/md"
+
+import { Checkbox } from "./ui/checkbox"
+
+type SortableTaskProps = {
+  task: Task
+  toggleTaskCompleted: (taskId: string) => void
+  deleteTask: (taskId: string) => void
+}
 
 function SortableTask({
   task,
   toggleTaskCompleted,
   deleteTask,
-}: {
-  task: Task
-  toggleTaskCompleted: (taskId: string) => void
-  deleteTask: (taskId: string) => void
-}) {
+}: SortableTaskProps) {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: task.id })
 
@@ -37,12 +42,12 @@ function SortableTask({
       {...listeners}
       className="flex cursor-grab items-center gap-3 rounded-lg border px-2 py-2 active:cursor-grabbing"
     >
-      <MdDragIndicator className="h-5 w-5" />
+      <MdDragIndicator className="h-5 w-5 shrink-0" />
 
       <Checkbox
         checked={task.completed}
         onCheckedChange={() => toggleTaskCompleted(task.id)}
-        onPointerDown={(e) => e.stopPropagation()}
+        onPointerDown={(event) => event.stopPropagation()}
         className="h-5 w-5 cursor-pointer"
       />
 
@@ -53,10 +58,11 @@ function SortableTask({
       >
         {task.title}
       </div>
+
       <button
         type="button"
         onClick={() => deleteTask(task.id)}
-        onPointerDown={(e) => e.stopPropagation()}
+        onPointerDown={(event) => event.stopPropagation()}
         className="cursor-pointer rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-red-500"
       >
         <Trash2 size={16} />
@@ -65,17 +71,19 @@ function SortableTask({
   )
 }
 
+type SortableColumnProps = {
+  column: Column
+  addTask: (columnId: string) => void
+  toggleTaskCompleted: (taskId: string) => void
+  deleteTask: (taskId: string) => void
+}
+
 function SortableColumn({
   column,
   addTask,
   toggleTaskCompleted,
   deleteTask,
-}: {
-  column: Column
-  addTask: (columnId: string) => void
-  toggleTaskCompleted: (taskId: string) => void
-  deleteTask: (taskId: string) => void
-}) {
+}: SortableColumnProps) {
   const { setNodeRef, attributes, listeners, transform, transition } =
     useSortable({ id: column.id })
 
@@ -86,10 +94,10 @@ function SortableColumn({
         transform: CSS.Transform.toString(transform),
         transition,
       }}
-      className="w-90 rounded-xl border p-4"
+      className="w-90 shrink-0 rounded-xl border p-4"
     >
       <div
-        className="mb-4 flex cursor-grab items-center gap-2 text-2xl font-bold"
+        className="mb-4 flex cursor-grab items-center gap-2 text-2xl font-bold active:cursor-grabbing"
         {...attributes}
         {...listeners}
       >
@@ -114,6 +122,7 @@ function SortableColumn({
       </SortableContext>
 
       <button
+        type="button"
         onClick={() => addTask(column.id)}
         className="mt-4 cursor-pointer rounded border px-3 py-1"
       >
@@ -125,12 +134,11 @@ function SortableColumn({
 
 type WorkspaceBoardProps = {
   columns: Column[]
-  setColumns: React.Dispatch<React.SetStateAction<Column[]>>
+  addColumn: () => void
   addTask: (columnId: string) => void
-  toggleTaskCompleted: (taskId: string) => void
+  toggleTaskCompleted: (taskId: string, completed: boolean) => void
   deleteTask: (taskId: string) => void
   updateWorkspaceLayout: (columns: Column[]) => void
-  addColumn: () => void
 }
 
 export function WorkspaceBoard({
@@ -141,16 +149,42 @@ export function WorkspaceBoard({
   deleteTask,
   updateWorkspaceLayout,
 }: WorkspaceBoardProps) {
+  const [localColumns, setLocalColumns] = useState<Column[]>([])
+
+  useEffect(() => {
+    setLocalColumns(columns)
+  }, [columns])
+
   function findColumn(taskOrColumnId: string) {
-    const column = columns.find((column) => column.id === taskOrColumnId)
+    const column = localColumns.find((column) => column.id === taskOrColumnId)
 
     if (column) return column
 
-    return columns.find((column) =>
+    return localColumns.find((column) =>
       column.tasks.some((task) => task.id === taskOrColumnId)
     )
   }
+  function handleToggleTaskCompleted(taskId: string) {
+    let nextCompleted = false
 
+    setLocalColumns((prev) =>
+      prev.map((column) => ({
+        ...column,
+        tasks: column.tasks.map((task) => {
+          if (task.id !== taskId) return task
+
+          nextCompleted = !task.completed
+
+          return {
+            ...task,
+            completed: nextCompleted,
+          }
+        }),
+      }))
+    )
+
+    toggleTaskCompleted(taskId, nextCompleted)
+  }
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
 
@@ -161,19 +195,23 @@ export function WorkspaceBoard({
 
     if (activeId === overId) return
 
-    const activeColumnIndex = columns.findIndex(
+    const activeColumnIndex = localColumns.findIndex(
       (column) => column.id === activeId
     )
 
-    const overColumnIndex = columns.findIndex((column) => column.id === overId)
+    const overColumnIndex = localColumns.findIndex(
+      (column) => column.id === overId
+    )
 
-    // Przesuwanie kolumn
     if (activeColumnIndex !== -1 && overColumnIndex !== -1) {
-      const newColumns = arrayMove(columns, activeColumnIndex, overColumnIndex)
+      const newColumns = arrayMove(
+        localColumns,
+        activeColumnIndex,
+        overColumnIndex
+      )
 
-      setColumns(newColumns)
+      setLocalColumns(newColumns)
       updateWorkspaceLayout(newColumns)
-
       return
     }
 
@@ -192,9 +230,10 @@ export function WorkspaceBoard({
 
     if (activeTaskIndex === -1) return
 
-    // Przesuwanie taska w tej samej kolumnie
     if (activeColumn.id === overColumn.id) {
-      const newColumns = columns.map((column) =>
+      if (overTaskIndex === -1) return
+
+      const newColumns = localColumns.map((column) =>
         column.id === activeColumn.id
           ? {
               ...column,
@@ -203,16 +242,14 @@ export function WorkspaceBoard({
           : column
       )
 
-      setColumns(newColumns)
+      setLocalColumns(newColumns)
       updateWorkspaceLayout(newColumns)
-
       return
     }
 
-    // Przesuwanie taska między kolumnami
     const activeTask = activeColumn.tasks[activeTaskIndex]
 
-    const newColumns = columns.map((column) => {
+    const newColumns = localColumns.map((column) => {
       if (column.id === activeColumn.id) {
         return {
           ...column,
@@ -238,7 +275,7 @@ export function WorkspaceBoard({
       return column
     })
 
-    setColumns(newColumns)
+    setLocalColumns(newColumns)
     updateWorkspaceLayout(newColumns)
   }
 
@@ -246,23 +283,25 @@ export function WorkspaceBoard({
     <div className="flex gap-6">
       <DndContext collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
         <SortableContext
-          items={columns.map((column) => column.id)}
+          items={localColumns.map((column) => column.id)}
           strategy={horizontalListSortingStrategy}
         >
           <div className="flex gap-6 py-6">
-            {columns.map((column) => (
+            {localColumns.map((column) => (
               <SortableColumn
                 key={column.id}
                 column={column}
                 addTask={addTask}
-                toggleTaskCompleted={toggleTaskCompleted}
+                toggleTaskCompleted={handleToggleTaskCompleted}
                 deleteTask={deleteTask}
               />
             ))}
           </div>
         </SortableContext>
       </DndContext>
+
       <button
+        type="button"
         onClick={addColumn}
         className="mt-6 flex h-12 cursor-pointer items-center gap-2 rounded-lg border px-6 tracking-wide"
       >

@@ -1,13 +1,11 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
+import { Link, useParams } from "react-router-dom"
 import { ChevronsUpDown } from "lucide-react"
 import { LuCircleMinus } from "react-icons/lu"
-import {
-  useAddWorkspaceMember,
-  useCreateColumn,
-  useWorkspaceMessages,
-} from "@/lib/queries/workspaceQueries"
-import { Card, CardHeader, CardTitle } from "@/components/ui/card"
+import { toast } from "sonner"
+
 import { Button } from "@/components/ui/button"
+import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Collapsible,
   CollapsibleContent,
@@ -21,7 +19,12 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 
+import { WorkspaceBoard } from "@/components/WorkspaceBoard"
+import { WorkspaceChat } from "@/components/WorkspaceChat"
+
 import {
+  useAddWorkspaceMember,
+  useCreateColumn,
   useCreateTask,
   useCreateWorkspace,
   useDeleteTask,
@@ -30,46 +33,78 @@ import {
   useWorkspace,
   useWorkspaces,
 } from "@/lib/queries/workspaceQueries"
-import { WorkspaceBoard } from "@/components/WorkspaceBoard"
-import { Link, useParams } from "react-router-dom"
-import type { Column, Task, Workspace } from "@/types"
-
-import { WorkspaceChat } from "@/components/WorkspaceChat"
 import { useCurrentUser } from "@/lib/queries/userQueries"
 
-import { toast } from "sonner"
+import type { Workspace } from "@/types"
+import Spinner from "@/components/Spinner"
 
 export default function Workspace() {
-  const { data: user } = useCurrentUser()
   const { workspaceId } = useParams()
-  const { workspaces } = useWorkspaces()
+  const { data: user } = useCurrentUser()
+
+  const { workspaces, isLoadingWorkspaces } = useWorkspaces()
+
+  const selectedWorkspaceId = workspaceId ?? workspaces?.[0]?.id
+
+  const { workspace, isLoadingWorkspace } = useWorkspace(
+    selectedWorkspaceId ?? ""
+  )
+
   const { createWorkspace } = useCreateWorkspace()
-  const { workspace } = useWorkspace(workspaceId!)
-  const [columns, setColumns] = useState<Column[]>([])
-  const [isOpen, setIsOpen] = useState(false)
+  const { createTask } = useCreateTask(workspaceId!)
+  const { createColumn } = useCreateColumn(workspaceId!)
+  const { deleteTask } = useDeleteTask(workspaceId!)
+  const { updateTaskCompleted } = useUpdateTaskCompleted(workspaceId!)
+  const { updateWorkspaceLayout } = useUpdateWorkspaceLayout(workspaceId!)
+  const { addWorkspaceMember } = useAddWorkspaceMember(workspaceId!)
+
+  const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState(false)
   const [isMembersOpen, setIsMembersOpen] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(true)
+
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false)
   const [isWorkspaceDialogOpen, setIsWorkspaceDialogOpen] = useState(false)
+  const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = useState(false)
+
   const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null)
   const [taskTitle, setTaskTitle] = useState("")
   const [workspaceTitle, setWorkspaceTitle] = useState("")
-  const { updateTaskCompleted } = useUpdateTaskCompleted(workspaceId!)
-  const { updateWorkspaceLayout } = useUpdateWorkspaceLayout(workspaceId!)
-  const { deleteTask } = useDeleteTask(workspaceId!)
-  const [isChatOpen, setIsChatOpen] = useState(true)
-  const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = useState(false)
   const [memberEmail, setMemberEmail] = useState("")
-  const { addWorkspaceMember } = useAddWorkspaceMember(workspaceId!)
-  const { createColumn } = useCreateColumn(workspaceId!)
 
-  function addColumn() {
+  function openAddTaskDialog(columnId: string) {
+    setSelectedColumnId(columnId)
+    setIsTaskDialogOpen(true)
+  }
+
+  function handleCreateWorkspace() {
+    if (!workspaceTitle.trim()) return
+
+    createWorkspace({ name: workspaceTitle })
+    setWorkspaceTitle("")
+    setIsWorkspaceDialogOpen(false)
+  }
+
+  function handleCreateTask() {
+    if (!selectedColumnId || !taskTitle.trim()) return
+
+    createTask({
+      title: taskTitle,
+      columnId: selectedColumnId,
+    })
+
+    setTaskTitle("")
+    setSelectedColumnId(null)
+    setIsTaskDialogOpen(false)
+  }
+
+  function handleCreateColumn() {
     const title = prompt("Column name")
     if (!title?.trim()) return
 
     createColumn({ title })
   }
 
-  function addMember() {
+  function handleAddMember() {
     if (!memberEmail.trim()) return
 
     addWorkspaceMember(
@@ -86,90 +121,31 @@ export default function Workspace() {
       }
     )
   }
+  console.log(workspaces, isLoadingWorkspaces)
+  if (isLoadingWorkspaces) {
+    return <Spinner />
+  }
 
-  useEffect(() => {
-    if (!workspace) return
+  if (!workspaces || workspaces.length === 0) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="-translate-y-50 text-center">
+          <h1 className="mb-4 text-2xl font-bold">No workspaces</h1>
 
-    setColumns(
-      workspace.columns.map((column: Column) => ({
-        id: column.id,
-        title: column.title,
-        //position: column.position,
-        tasks: column.tasks.map((task: Task) => ({
-          id: task.id,
-          title: task.title,
-          completed: task.completed ?? false,
-        })),
-      }))
+          <Button onClick={() => setIsWorkspaceDialogOpen(true)}>
+            Create Workspace
+          </Button>
+        </div>
+      </div>
     )
-  }, [workspace, workspaceId])
-
-  function openAddTaskDialog(columnId: string) {
-    setSelectedColumnId(columnId)
-    setIsTaskDialogOpen(true)
-  }
-
-  function openAddWorkspaceDialog() {
-    setIsWorkspaceDialogOpen(true)
-  }
-
-  function removeTask(taskId: string) {
-    setColumns((prev) =>
-      prev.map((column) => ({
-        ...column,
-        tasks: column.tasks.filter((task) => task.id !== taskId),
-      }))
-    )
-
-    deleteTask(taskId)
-  }
-
-  function createWorkspaceFn() {
-    createWorkspace({ name: workspaceTitle })
-    setWorkspaceTitle("")
-    setIsWorkspaceDialogOpen(false)
-  }
-
-  function toggleTaskCompleted(taskId: string) {
-    updateTaskCompleted({
-      taskId,
-    })
-    setColumns((prev) =>
-      prev.map((column) => ({
-        ...column,
-        tasks: column.tasks.map((task) =>
-          task.id === taskId
-            ? {
-                ...task,
-                completed: !task.completed,
-              }
-            : task
-        ),
-      }))
-    )
-  }
-
-  const { createTask: createTaskMutation } = useCreateTask(workspaceId!)
-  function createTask() {
-    if (!selectedColumnId || !taskTitle.trim()) return
-
-    createTaskMutation({
-      title: taskTitle,
-      columnId: selectedColumnId,
-    })
-
-    setTaskTitle("")
-    setSelectedColumnId(null)
-    setIsTaskDialogOpen(false)
   }
 
   return (
     <div className="relative mx-12">
-      {/* Workspace dropdown */}
       <div className="absolute top-6 left-0 z-10 flex gap-3">
         <Collapsible
-          open={isOpen}
-          onOpenChange={setIsOpen}
+          open={isWorkspaceDropdownOpen}
+          onOpenChange={setIsWorkspaceDropdownOpen}
           className="flex w-87.5 flex-col gap-2 rounded-sm bg-neutral-900"
         >
           <div className="flex items-center justify-between gap-4 rounded-sm bg-neutral-900 px-4 py-1">
@@ -185,7 +161,6 @@ export default function Workspace() {
                 className="size-8 cursor-pointer"
               >
                 <ChevronsUpDown />
-                <span className="sr-only">Toggle details</span>
               </Button>
             </CollapsibleTrigger>
           </div>
@@ -193,18 +168,19 @@ export default function Workspace() {
           <CollapsibleContent className="mb-3 flex flex-col gap-2">
             {workspaces?.map((workspace: Workspace) => (
               <Link
-                onClick={() => setIsOpen(false)}
                 key={workspace.id}
-                className="mx-2 cursor-pointer rounded-md border px-4 py-2 text-sm font-medium"
                 to={`/workspace/${workspace.id}`}
+                onClick={() => setIsWorkspaceDropdownOpen(false)}
+                className="mx-2 cursor-pointer rounded-md border px-4 py-2 text-sm font-medium"
               >
                 {workspace.name}
               </Link>
             ))}
           </CollapsibleContent>
         </Collapsible>
+
         <button
-          onClick={openAddWorkspaceDialog}
+          onClick={() => setIsWorkspaceDialogOpen(true)}
           className="h-10 cursor-pointer rounded-lg border px-4 py-2"
         >
           Create Workspace
@@ -228,21 +204,30 @@ export default function Workspace() {
               </CollapsibleTrigger>
             </CardHeader>
 
-            <CollapsibleContent className="px-3">
-              {workspace &&
-                workspace?.members.map((member) => (
-                  <div
-                    className="my-2 flex gap-2 rounded-sm border px-6 py-2"
-                    key={member.id}
-                  >
-                    <div className="h-5 w-5 rounded-full bg-neutral-500"></div>
-                    <h3>{member.user.username}</h3>
-                    <p>{member.role}</p>
+            <CollapsibleContent className="px-3 pb-3">
+              {workspace?.members?.map((member) => (
+                <div
+                  key={member.id}
+                  className="my-2 flex items-center justify-between gap-2 rounded-sm border px-4 py-2"
+                >
+                  <div>
+                    <h3 className="text-sm font-medium">
+                      {member.user.username}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      {member.user.email}
+                    </p>
                   </div>
-                ))}
+
+                  <span className="rounded-full border px-2 py-1 text-xs">
+                    {member.role}
+                  </span>
+                </div>
+              ))}
+
               <button
                 onClick={() => setIsAddMemberDialogOpen(true)}
-                className="h-10 w-full cursor-pointer rounded-lg border px-4 py-2"
+                className="mt-2 h-10 w-full cursor-pointer rounded-lg border px-4 py-2"
               >
                 Add Member
               </button>
@@ -250,7 +235,7 @@ export default function Workspace() {
           </Card>
         </Collapsible>
       </div>
-      {/* Chat */}
+
       <div className="fixed top-20 right-5 z-20">
         <Collapsible open={isChatOpen} onOpenChange={setIsChatOpen}>
           <Card className="w-100 overflow-hidden pt-0">
@@ -280,14 +265,15 @@ export default function Workspace() {
         </Collapsible>
       </div>
 
-      {/* Board */}
       <div className="flex pt-20">
         <WorkspaceBoard
           columns={workspace?.columns ?? []}
-          addColumn={addColumn}
+          addColumn={handleCreateColumn}
           addTask={openAddTaskDialog}
-          toggleTaskCompleted={toggleTaskCompleted}
-          deleteTask={removeTask}
+          toggleTaskCompleted={(taskId, completed) =>
+            updateTaskCompleted({ taskId, completed })
+          }
+          deleteTask={deleteTask}
           updateWorkspaceLayout={updateWorkspaceLayout}
         />
       </div>
@@ -304,7 +290,7 @@ export default function Workspace() {
             placeholder="Task title..."
           />
 
-          <Button className="cursor-pointer" onClick={createTask}>
+          <Button onClick={handleCreateTask} className="cursor-pointer">
             Create
           </Button>
         </DialogContent>
@@ -325,7 +311,7 @@ export default function Workspace() {
             placeholder="Workspace title..."
           />
 
-          <Button onClick={createWorkspaceFn} className="cursor-pointer">
+          <Button onClick={handleCreateWorkspace} className="cursor-pointer">
             Create
           </Button>
         </DialogContent>
@@ -346,7 +332,7 @@ export default function Workspace() {
             placeholder="User email..."
           />
 
-          <Button onClick={addMember} className="cursor-pointer">
+          <Button onClick={handleAddMember} className="cursor-pointer">
             Add
           </Button>
         </DialogContent>

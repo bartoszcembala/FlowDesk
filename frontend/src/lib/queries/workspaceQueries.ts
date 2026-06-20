@@ -107,7 +107,13 @@ export function useUpdateTaskCompleted(workspaceId: string) {
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
-    mutationFn: async ({ taskId }: { taskId: string }) => {
+    mutationFn: async ({
+      taskId,
+      completed,
+    }: {
+      taskId: string
+      completed: boolean
+    }) => {
       const res = await fetch(
         `http://localhost:3000/api/workspaces/${taskId}/completed`,
         {
@@ -117,7 +123,7 @@ export function useUpdateTaskCompleted(workspaceId: string) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            completed: true,
+            completed,
           }),
         }
       )
@@ -125,10 +131,10 @@ export function useUpdateTaskCompleted(workspaceId: string) {
       const responseReady = await res.json()
 
       if (!res.ok) {
-        throw new Error(responseReady.message)
+        throw new Error(responseReady.message || "Failed to update task")
       }
 
-      return responseReady.data.task
+      return responseReady
     },
 
     onSuccess: () => {
@@ -141,10 +147,8 @@ export function useUpdateTaskCompleted(workspaceId: string) {
   return {
     updateTaskCompleted: mutation.mutate,
     updateTaskCompletedAsync: mutation.mutateAsync,
-
     isUpdatingTaskCompleted: mutation.isPending,
     updateTaskCompletedError: mutation.error,
-
     resetUpdateTaskCompleted: mutation.reset,
   }
 }
