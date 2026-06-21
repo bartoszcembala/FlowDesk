@@ -63,39 +63,67 @@ export async function signup(req: Request, res: Response, next: any) {
   }
 }
 
-export const login = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export async function login(req: Request, res: Response, next: any) {
   try {
-    const { email, password } = req.body;
+    const { email, password: inputPassword } = req.body;
 
-    if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
+    if (!email || !inputPassword) {
+      return res.status(400).json({
+        success: false,
+        error: "Email and password are required",
+      });
     }
 
     const user = await prisma.user.findUnique({
       where: { email },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        password: true,
+      },
     });
 
     if (!user) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials.",
+      });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordCorrect = await bcrypt.compare(
+      inputPassword,
+      user.password,
+    );
 
-    if (!isPasswordValid) {
-      return res.status(401).json({ message: "Invalid credentials" });
+    if (!isPasswordCorrect) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials.",
+      });
     }
 
-    return res.status(200).json({ message: "Logged in" });
+    const token = signToken(user.id);
+
+    sendToken(res, token);
+
+    const { password, ...safeUser } = user;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        user: safeUser,
+      },
+    });
   } catch (error) {
-    next(error);
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Internal server error",
+    });
   }
-};
+}
 
 export async function logout(req: Request, res: Response) {
   try {

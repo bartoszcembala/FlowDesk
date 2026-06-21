@@ -29,6 +29,21 @@ export interface Column {
   title: string
   tasks: Task[]
 }
+export interface WorkspaceMember {
+  id: string
+  userId: string
+  workspaceId: string
+  role: "OWNER" | "MEMBER"
+
+  createdAt: string
+
+  user: {
+    id: string
+    username: string
+    email: string
+    avatar: string | null
+  }
+}
 
 export interface Workspace {
   id: string
@@ -37,14 +52,5 @@ export interface Workspace {
   columns: Column[]
   createdAt: string
   updatedAt: string
-  members: {
-    id: string
-    role: "OWNER" | "MEMBER"
-    user: {
-      id: string
-      username: string
-      email: string
-      avatar?: string
-    }
-  }[]
+  members: WorkspaceMember[]
 }
